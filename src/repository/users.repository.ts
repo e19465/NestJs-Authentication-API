@@ -13,7 +13,7 @@ import { DatabaseService } from 'src/database/database.service';
 import {
   CreateUserRepositoryModel,
   UpdateUserRepositoryModel,
-} from 'src/repository-models/user.models';
+} from 'src/repository/models/user.models';
 
 @Injectable()
 export class UsersRepository {

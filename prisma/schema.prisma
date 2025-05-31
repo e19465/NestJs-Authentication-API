@@ -30,6 +30,20 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  microsoftCredential UserMicrosoftCredential?
+
   @@index([email], name: "idx_user_email")
 }
 
+model UserMicrosoftCredential {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  accessToken String
+  refreshToken String
+  idToken     String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId], name: "idx_user_microsoft_credential_user_id") 
+}

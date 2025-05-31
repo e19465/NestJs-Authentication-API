@@ -35,3 +35,40 @@ export const JwtSettings = {
   accessCookieExpiresIn: 1 * 15 * 60 * 1000, // 15m in milliseconds
   refreshCookieExpiresIn: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
 };
+
+// Microsoft OAuth settings
+const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
+const MICROSOFT_OBJECT_ID = process.env.MICROSOFT_OBJECT_ID;
+const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID;
+const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
+const MICROSOFT_CLIENT_SECRET_ID = process.env.MICROSOFT_CLIENT_SECRET_ID;
+
+export const MicrosoftSettings = {
+  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  clientID: MICROSOFT_CLIENT_ID,
+  objectID: MICROSOFT_OBJECT_ID,
+  tenantID: MICROSOFT_TENANT_ID,
+  clientSecret: MICROSOFT_CLIENT_SECRET,
+  clientSecretId: MICROSOFT_CLIENT_SECRET_ID,
+  identityMetadata: `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/v2.0/.well-known/openid-configuration`,
+  responseType: 'code',
+  responseMode: 'query',
+  redirectUrl: `http://localhost:3000/auth/microsoft/redirect`,
+  allowHttpForRedirectUrl: true,
+  scope: [
+    'openid',
+    'profile',
+    'email',
+    'offline_access',
+    'User.Read',
+    'Files.ReadWrite',
+    'Mail.ReadWrite',
+    'Mail.Send',
+  ],
+};
+
+const MICROSOFT_TOKEN_ENCRYPTION_SECRET =
+  process.env.MICROSOFT_TOKEN_ENCRYPTION_SECRET;
+export const MicrosoftTokenEncryptionSettings = {
+  microsoftTokenEncryptionSecret: MICROSOFT_TOKEN_ENCRYPTION_SECRET,
+};

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpStatus,
   Post,
   Req,
@@ -18,8 +19,13 @@ import { AuthLocalGuard } from 'src/guards/auth.local.guard';
 import { Request } from 'express';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { JwtSettings } from 'src/settings';
-import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
+import {
+  DecodedJwtAccessToken,
+  JwtTokenResponseDto,
+} from 'src/dto/response/auth.response.dto';
 import { setCookieToResponse } from 'src/helpers/auth-helper';
+import { AuthMicrosoftGuard } from 'src/guards/auth.microsoft.guard';
+import { AuthJwtGuard } from 'src/guards/auth.jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -127,13 +133,66 @@ export class AuthController {
       throw error;
     }
   }
+
+  @Get('microsoft')
+  @UseGuards(AuthMicrosoftGuard)
+  async microsoftLogin() {
+    // Redirection happens automatically
+  }
+
+  @Post('microsoft/obtain-tokens')
+  @UseGuards(AuthJwtGuard)
+  async getMicrosoftTokens(
+    @Req() request: Request,
+    @Body() data: { code: string },
+  ) {
+    try {
+      const requestUser = request.user as DecodedJwtAccessToken;
+      const userId = requestUser.id;
+      const code = data.code;
+      const serviceResponse = await this.authService.getMicrosoftTokens(
+        code,
+        userId,
+      );
+      return ApiResponse.success(
+        null,
+        'Microsoft tokens obtained successfully',
+        serviceResponse,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('microsoft/refresh-microsoft-tokens')
+  @UseGuards(AuthJwtGuard)
+  async refreshMicrosoftTokens(@Req() request: Request) {
+    try {
+      const requestUser = request.user as DecodedJwtAccessToken;
+      const userId = requestUser.id;
+      const serviceResponse =
+        await this.authService.refreshMicrosoftTokens(userId);
+      return ApiResponse.success(
+        null,
+        'Microsoft tokens refreshed successfully',
+        serviceResponse,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 /**
  * Full Endpoints List
  *
- * POST   <base_url>/auth/sign-up  -> Register a new user
- * POST   <base_url>/auth/sign-in  -> Login user and generate JWT tokens
- * POST   <base_url>/auth/refresh  -> Refresh JWT tokens using a valid refresh token
- * DELETE <base_url>/auth/sign-out -> Logout user and clear cookies
+ * POST   <base_url>/auth/sign-up   -> Register a new user
+ * POST   <base_url>/auth/sign-in   -> Login user and generate JWT tokens
+ * POST   <base_url>/auth/refresh   -> Refresh JWT tokens using a valid refresh token
+ * DELETE <base_url>/auth/sign-out  -> Logout user and clear cookies
+ * GET    <base_url>/auth/microsoft -> Redirect to Microsoft OAuth login
+ * POST    <base_url>/auth/microsoft/obtain-tokens/ -> Obtain Microsoft tokens using the authorization code
+ * POST    <base_url>/auth/microsoft/refresh-microsoft-tokens/ -> Refresh Microsoft tokens
  */

@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { SignUpUserRequesteDto } from 'src/dto/request/auth.request.dto';
-import { UsersRepository } from '../users/users.repository';
+import { UsersRepository } from '../../repository/users.repository';
 import { isStringsEqual, normalizeEmail } from 'src/helpers/shared.helper';
 import {
   passwordStrengthChecker,
@@ -15,8 +15,12 @@ import { Role } from 'generated/prisma';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { JwtService } from '@nestjs/jwt';
-import { JwtSettings } from 'src/settings';
+import { JwtSettings, MicrosoftSettings } from 'src/settings';
 import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
+import axios from 'axios';
+import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
+import { StoreMicrosoftCredentialsDto } from 'src/repository/models/microsoft.models';
+import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 
 /**
  * AuthService provides authentication and user management functionalities.
@@ -32,6 +36,8 @@ export class AuthService {
   constructor(
     private readonly userRepository: UsersRepository,
     private readonly jwtService: JwtService,
+    private readonly tokenCryptoHelper: TokenCryptoHelper,
+    private readonly microsoftRepository: UserMicrosoftCredentialRepository,
   ) {}
 
   /**
@@ -189,6 +195,91 @@ export class AuthService {
       return userResponse;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async refreshMicrosoftTokens(userId: string): Promise<void> {
+    try {
+      const credentials =
+        await this.microsoftRepository.retrieveCredentialsForUser(userId);
+      if (!credentials) {
+        throw new BadRequestException(
+          'No Microsoft credentials found for user',
+        );
+      }
+
+      const decryptedRefreshToken = this.tokenCryptoHelper.decrypt(
+        credentials.refreshToken,
+      );
+
+      const tokenUrl = MicrosoftSettings.tokenUrl;
+
+      const params = new URLSearchParams({
+        client_id: MicrosoftSettings.clientID ?? '',
+        scope: MicrosoftSettings.scope.join(' '),
+        refresh_token: decryptedRefreshToken ?? '',
+        grant_type: 'refresh_token',
+        client_secret: MicrosoftSettings.clientSecret ?? '',
+      });
+
+      const response = await axios.post(tokenUrl, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      const accessToken = response.data.access_token;
+      const refreshToken = response.data.refresh_token;
+      const idToken = response.data.id_token;
+
+      const newCredentials: StoreMicrosoftCredentialsDto = {
+        userId: userId,
+        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
+        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
+        idToken: this.tokenCryptoHelper.encrypt(idToken),
+      };
+
+      await this.microsoftRepository.storeMicrosoftCredentials(newCredentials);
+      return;
+    } catch (error) {
+      throw new UnauthorizedException('Failed to refresh Microsoft tokens');
+    }
+  }
+
+  async getMicrosoftTokens(code: string, userId: string): Promise<void> {
+    try {
+      const tokenUrl = MicrosoftSettings.tokenUrl;
+
+      const params = new URLSearchParams({
+        client_id: MicrosoftSettings.clientID ?? '',
+        scope: MicrosoftSettings.scope.join(' '),
+        code: code ?? '',
+        redirect_uri: MicrosoftSettings.redirectUrl ?? '',
+        grant_type: 'authorization_code',
+        client_secret: MicrosoftSettings.clientSecret ?? '',
+      });
+
+      const response = await axios.post(tokenUrl, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      const accessToken = response.data.access_token;
+      const refreshToken = response.data.refresh_token;
+      const idToken = response.data.id_token;
+
+      const credentials: StoreMicrosoftCredentialsDto = {
+        userId: userId,
+        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
+        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
+        idToken: this.tokenCryptoHelper.encrypt(idToken),
+      };
+
+      await this.microsoftRepository.storeMicrosoftCredentials(credentials);
+      return;
+    } catch (error) {
+      throw new UnauthorizedException('Failed to obtain tokens from Microsoft');
     }
   }
 }
