@@ -23,3 +23,13 @@ export const CORS_ALLOW_CREDENTIALS =
 
 // DATABASE settings
 export const DATABASE_URL = process.env.DATABASE_URL;
+
+// JWT settings
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+export const JwtSettings = {
+  accessTokenSecret: ACCESS_TOKEN_SECRET,
+  refreshTokenSecret: REFRESH_TOKEN_SECRET,
+  accessTokenExpiresIn: '15m',
+  refreshTokenExpiresIn: '7d',
+};

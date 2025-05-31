@@ -31,3 +31,13 @@ export class SignUpUserRequesteDto {
   @IsNotEmpty()
   confirmPassword: string;
 }
+
+export class LocalSignInRequestDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}

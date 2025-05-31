@@ -18,6 +18,27 @@ export class UsersService {
     }
   }
 
+  async me(id: string): Promise<UserResponseDto> {
+    try {
+      if (!id) {
+        throw new BadRequestException('User ID is required');
+      }
+      const users = await this.userRepository.findUsersById(id);
+      if (!users) {
+        throw new BadRequestException('User not found');
+      }
+      const user = users[0];
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      return toUserResponseDto(user);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findUsers(
     userId?: string,
     email?: string,

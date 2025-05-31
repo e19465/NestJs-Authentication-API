@@ -4,14 +4,20 @@ import {
   Delete,
   Get,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Query,
+  Req,
   Response,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserRequesteDto } from 'src/dto/request/user.request.dto';
 import { ApiResponse } from 'src/helpers/api-response.helper';
+import { AuthJwtGuard } from 'src/guards/auth.jwt.guard';
+import { Request } from 'express';
+import { DecodedJwtAccessToken } from 'src/dto/response/auth.response.dto';
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @Controller('users')
@@ -37,7 +43,7 @@ export class UsersController {
   }
 
   @Get('find') // GET - /users/get-one/?id={id}&email={email}&role={role}
-  async getOneUser(
+  async findUser(
     @Query('id') id?: string,
     @Query('email') email?: string,
     @Query('role') role?: string,
@@ -86,6 +92,28 @@ export class UsersController {
         'User deleted successfully',
         null,
         HttpStatus.NO_CONTENT,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Get('me') // POST - /users/me
+  @UseGuards(AuthJwtGuard) // Use JWT guard to protect this route
+  async me(@Req() request: Request) {
+    try {
+      const user = request.user as DecodedJwtAccessToken;
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const userDetails = await this.usersService.me(user.id);
+
+      return ApiResponse.success(
+        null,
+        'User details retrieved successfully',
+        userDetails,
+        HttpStatus.OK,
       );
     } catch (error) {
       throw error;
