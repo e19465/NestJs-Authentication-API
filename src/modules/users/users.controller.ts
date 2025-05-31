@@ -9,7 +9,6 @@ import {
   Patch,
   Query,
   Req,
-  Response,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -25,10 +24,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('get-all') // GET - /users/get-all
-  async getAllUsers(
-    @Response({ passthrough: true }) response: any,
-    @Query('role') role?: string,
-  ) {
+  async getAllUsers() {
     try {
       const serviceResponse = await this.usersService.getAllUsers();
       return ApiResponse.success(
@@ -128,4 +124,5 @@ export class UsersController {
  * GET    <base_url>/users/get-one/:id -> Returns one user
  * PATCH  <base_url>/users/update-one/:id -> Updates an user
  * DELETE <base_url>/users/delete-one/:id -> Delete an user
+ * GET    <base_url>/users/me -> Returns the authenticated user details
  */

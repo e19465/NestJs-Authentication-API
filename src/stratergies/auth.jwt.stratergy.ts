@@ -1,6 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-jwt';
+import { JwtSettings } from 'src/settings';
 
 export class AuthJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
@@ -22,11 +23,10 @@ export class AuthJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         if (!access_token) {
           throw new UnauthorizedException('Unauthorized access');
         }
-
         return access_token;
       },
       ignoreExpiration: false,
-      secretOrKey: 'test-secret',
+      secretOrKey: JwtSettings.accessTokenSecret as string,
     });
   }
 

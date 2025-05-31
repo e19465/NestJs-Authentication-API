@@ -1,4 +1,6 @@
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { JwtSettings } from 'src/settings';
 
 /**
  * Checks if a given password meets the specified strength criteria.
@@ -43,4 +45,33 @@ export const comparePassword = async (
   hashed: string,
 ): Promise<boolean> => {
   return await bcrypt.compare(password, hashed);
+};
+
+/**
+ * Sets a cookie on the HTTP response with the specified name, value, and expiration.
+ *
+ * @param name - The name of the cookie to set ('access' or 'refresh').
+ * @param response - The HTTP response object to which the cookie will be attached.
+ * @param value - The value to assign to the cookie.
+ * @param expires - The duration in milliseconds after which the cookie will expire.
+ *
+ * @remarks
+ * The cookie is set with the following options:
+ * - `httpOnly`: true (prevents client-side JavaScript from accessing the cookie)
+ * - `secure`: true (ensures the cookie is sent only over HTTPS)
+ * - `sameSite`: 'none' (allows cross-site cookie usage)
+ * - `expires`: Calculated based on the current time plus the provided expiration duration
+ */
+export const setCookieToResponse = (
+  name: 'access' | 'refresh',
+  response: any,
+  value: string,
+  expires: number,
+) => {
+  response.cookie(name, value, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    expires: new Date(Date.now() + expires),
+  });
 };

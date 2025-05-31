@@ -5,3 +5,8 @@ export class DecodedJwtAccessToken {
   iat: number;
   exp: number;
 }
+
+export class JwtTokenResponseDto {
+  access: string;
+  refresh: string;
+}

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SignUpUserRequesteDto } from 'src/dto/request/auth.request.dto';
 import { UsersRepository } from '../users/users.repository';
 import { isStringsEqual, normalizeEmail } from 'src/helpers/shared.helper';
@@ -11,6 +15,8 @@ import { Role } from 'generated/prisma';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { JwtService } from '@nestjs/jwt';
+import { JwtSettings } from 'src/settings';
+import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
 
 @Injectable()
 export class AuthService {
@@ -51,16 +57,49 @@ export class AuthService {
     }
   }
 
-  async generateJwtToken(user: UserResponseDto): Promise<string> {
+  async generateJwtTokens(user: UserResponseDto): Promise<JwtTokenResponseDto> {
     try {
       const payload = {
         id: user.id,
         email: user.email,
         role: user.role,
       };
-      return await this.jwtService.sign(payload);
+
+      const accessToken = this.jwtService.sign(payload, {
+        secret: JwtSettings.accessTokenSecret,
+        expiresIn: JwtSettings.accessTokenExpiresIn,
+      });
+
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: JwtSettings.refreshTokenSecret,
+        expiresIn: JwtSettings.refreshTokenExpiresIn,
+      });
+
+      return {
+        access: accessToken,
+        refresh: refreshToken,
+      };
     } catch (error) {
       throw error;
+    }
+  }
+
+  async refreshJwtTokens(refreshToken: string): Promise<JwtTokenResponseDto> {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: JwtSettings.refreshTokenSecret,
+      });
+      const users = await this.userRepository.findUsersById(payload.id);
+      if (!users) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+      const user = users[0];
+      if (!user) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+      return this.generateJwtTokens(toUserResponseDto(user));
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 

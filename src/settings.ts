@@ -32,4 +32,6 @@ export const JwtSettings = {
   refreshTokenSecret: REFRESH_TOKEN_SECRET,
   accessTokenExpiresIn: '15m',
   refreshTokenExpiresIn: '7d',
+  accessCookieExpiresIn: 1 * 15 * 60 * 1000, // 15m in milliseconds
+  refreshCookieExpiresIn: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
 };

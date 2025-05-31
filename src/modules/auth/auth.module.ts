@@ -13,15 +13,7 @@ import { AuthJwtStrategy } from 'src/stratergies/auth.jwt.stratergy';
     PassportModule,
     DatabaseModule,
     UsersModule,
-    JwtModule.register({
-      secret: 'test-secret',
-      signOptions: { expiresIn: '1h' }, // Token expiration time
-      global: true, // Makes the JWT module available globally
-      verifyOptions: {
-        algorithms: ['HS256'], // Specify the algorithm used for signing
-        ignoreExpiration: false, // Ensure expiration is checked
-      },
-    }),
+    JwtModule.register({}),
   ],
   providers: [AuthService, AuthLocalStrategy, AuthJwtStrategy],
   controllers: [AuthController],

@@ -41,3 +41,9 @@ export class LocalSignInRequestDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class RefreshTokenRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+}
