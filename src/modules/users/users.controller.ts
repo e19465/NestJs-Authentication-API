@@ -17,6 +17,7 @@ import { ApiResponse } from 'src/helpers/api-response.helper';
 import { AuthJwtGuard } from 'src/guards/auth.jwt.guard';
 import { Request } from 'express';
 import { DecodedJwtAccessToken } from 'src/dto/response/auth.response.dto';
+import { AdminGuard } from 'src/guards/auth.admin.guard';
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @Controller('users')
@@ -24,6 +25,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('get-all') // GET - /users/get-all
+  @UseGuards(AdminGuard)
   async getAllUsers() {
     try {
       const serviceResponse = await this.usersService.getAllUsers();
