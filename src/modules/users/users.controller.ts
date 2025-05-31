@@ -120,9 +120,9 @@ export class UsersController {
 /**
  * Full Endpoints List
  *
- * GET    <base_url>/users/get-all -> Returns list of users
- * GET    <base_url>/users/get-one/:id -> Returns one user
+ * GET    <base_url>/users/get-all        -> Returns list of users
+ * GET    <base_url>/users/get-one/:id    -> Returns one user
  * PATCH  <base_url>/users/update-one/:id -> Updates an user
  * DELETE <base_url>/users/delete-one/:id -> Delete an user
- * GET    <base_url>/users/me -> Returns the authenticated user details
+ * GET    <base_url>/users/me             -> Returns the authenticated user details
  */

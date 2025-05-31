@@ -29,6 +29,12 @@ export class UpdateUserRequesteDto {
   @IsEmail()
   email?: string;
 
+  /**
+   * Converts the current DTO instance to an `UpdateUserRepositoryModel`.
+   *
+   * @returns {UpdateUserRepositoryModel} An object containing the user's updated properties,
+   * specifically the `name` field, to be used by the repository layer.
+   */
   toUpdateUserRepositoryModel(): UpdateUserRepositoryModel {
     return {
       name: this.name,

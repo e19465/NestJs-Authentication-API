@@ -25,12 +25,29 @@ export class CustomLoggerService extends ConsoleLogger {
     }
   }
 
+  /**
+   * Logs a message with an optional context.
+   * The log entry is written to a file and then passed to the base logger.
+   *
+   * @param message - The message or object to log.
+   * @param context - Optional context string to associate with the log entry.
+   */
   log(message: any, context?: string) {
     const entry = `${context}\t${message}`;
     this.logToFile(entry);
     super.log(message, context);
   }
 
+  /**
+   * Logs an error message with optional stack/context and exception details.
+   *
+   * @param message - The error message or object to log.
+   * @param stackOrContext - Optional stack trace or context string to provide additional information.
+   * @param exception - Optional exception object containing error details.
+   *
+   * @remarks
+   * This method logs the error entry to a file and then delegates to the base logger's error method.
+   */
   error(message: any, stackOrContext?: string, exception?: any) {
     const entry = `${stackOrContext}\t${message}`;
     this.logToFile(entry, exception);

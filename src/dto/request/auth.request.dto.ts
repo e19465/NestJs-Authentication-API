@@ -32,6 +32,12 @@ export class SignUpUserRequesteDto {
   confirmPassword: string;
 }
 
+/**
+ * Data Transfer Object for local sign-in requests.
+ *
+ * @property email - The user's email address. Must be a valid, non-empty email.
+ * @property password - The user's password. Must be a non-empty string.
+ */
 export class LocalSignInRequestDto {
   @IsEmail()
   @IsNotEmpty()
@@ -42,6 +48,15 @@ export class LocalSignInRequestDto {
   password: string;
 }
 
+/**
+ * Data Transfer Object for handling refresh token requests.
+ *
+ * @remarks
+ * This DTO is used to validate and transfer the refresh token
+ * provided by the client when requesting a new access token.
+ *
+ * @property token - The refresh token string. Must be a non-empty string.
+ */
 export class RefreshTokenRequestDto {
   @IsString()
   @IsNotEmpty()

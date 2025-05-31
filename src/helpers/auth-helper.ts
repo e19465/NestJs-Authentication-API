@@ -1,6 +1,4 @@
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { JwtSettings } from 'src/settings';
 
 /**
  * Checks if a given password meets the specified strength criteria.

@@ -5,10 +5,26 @@ import { UsersRepository } from './users.repository';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { normalizeEmail, normalizeRole } from 'src/helpers/shared.helper';
 
+/**
+ * UsersService provides methods for managing user accounts.
+ *
+ * Methods:
+ * - getAllUsers(): Promise<UserResponseDto[]>
+ * - me(id: string): Promise<UserResponseDto>
+ * - findUsers(userId?: string, email?: string, role?: string): Promise<UserResponseDto[]>
+ * - updateUser(id: string, data: UpdateUserRequesteDto): Promise<UserResponseDto>
+ * - deleteUser(id: string): Promise<void>
+ */
 @Injectable()
 export class UsersService {
   constructor(private readonly userRepository: UsersRepository) {}
 
+  /**
+   * Retrieves all users from the repository.
+   *
+   * @returns Promise resolving to an array of UserResponseDto objects.
+   * @throws Any error encountered during the repository operation.
+   */
   async getAllUsers(): Promise<UserResponseDto[]> {
     try {
       const users = await this.userRepository.getAllUsers();
@@ -18,6 +34,13 @@ export class UsersService {
     }
   }
 
+  /**
+   * Retrieves the user information for the given user ID.
+   *
+   * @param id - The unique identifier of the user.
+   * @returns Promise resolving to a UserResponseDto object.
+   * @throws BadRequestException if the ID is missing or user is not found.
+   */
   async me(id: string): Promise<UserResponseDto> {
     try {
       if (!id) {
@@ -39,6 +62,16 @@ export class UsersService {
     }
   }
 
+  /**
+   * Finds users based on provided identifiers: userId, email, or role.
+   * At least one identifier must be provided.
+   *
+   * @param userId - The unique identifier of the user (optional).
+   * @param email - The email address of the user (optional).
+   * @param role - The role of the user (optional).
+   * @returns Promise resolving to an array of UserResponseDto objects.
+   * @throws BadRequestException if no identifier is provided or role is invalid.
+   */
   async findUsers(
     userId?: string,
     email?: string,
@@ -97,6 +130,14 @@ export class UsersService {
     return responseUsers;
   }
 
+  /**
+   * Updates the user account with the given ID using the provided data.
+   *
+   * @param id - The unique identifier of the user to update.
+   * @param data - The data to update the user with.
+   * @returns Promise resolving to the updated UserResponseDto object.
+   * @throws Any error encountered during the update operation.
+   */
   async updateUser(
     id: string,
     data: UpdateUserRequesteDto,
@@ -113,6 +154,13 @@ export class UsersService {
     }
   }
 
+  /**
+   * Deletes the user account with the specified ID.
+   *
+   * @param id - The unique identifier of the user to delete.
+   * @returns Promise resolving to void.
+   * @throws Any error encountered during the delete operation.
+   */
   async deleteUser(id: string): Promise<void> {
     try {
       await this.userRepository.deleteUserAccount(id);

@@ -18,6 +18,15 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtSettings } from 'src/settings';
 import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
 
+/**
+ * AuthService provides authentication and user management functionalities.
+ *
+ * Methods:
+ * - validateUser(email: string, password: string): Promise<UserResponseDto>
+ * - generateJwtTokens(user: UserResponseDto): Promise<JwtTokenResponseDto>
+ * - refreshJwtTokens(refreshToken: string): Promise<JwtTokenResponseDto>
+ * - createUser(data: SignUpUserRequesteDto): Promise<UserResponseDto>
+ */
 @Injectable()
 export class AuthService {
   constructor(
@@ -25,6 +34,16 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  /**
+   * Validates a user's credentials.
+   * Checks if the provided email and password are valid and match an existing user.
+   * Throws BadRequestException if credentials are invalid or missing.
+   *
+   * @param email - The user's email address.
+   * @param password - The user's password.
+   * @returns A promise that resolves to a UserResponseDto if validation is successful.
+   * @throws BadRequestException if credentials are invalid or missing.
+   */
   async validateUser(
     email: string,
     password: string,
@@ -57,6 +76,13 @@ export class AuthService {
     }
   }
 
+  /**
+   * Generates JWT access and refresh tokens for a user.
+   * Uses the user's id, email, and role as the payload.
+   *
+   * @param user - The user for whom to generate tokens.
+   * @returns A promise that resolves to a JwtTokenResponseDto containing access and refresh tokens.
+   */
   async generateJwtTokens(user: UserResponseDto): Promise<JwtTokenResponseDto> {
     try {
       const payload = {
@@ -84,6 +110,15 @@ export class AuthService {
     }
   }
 
+  /**
+   * Refreshes JWT tokens using a valid refresh token.
+   * Verifies the refresh token and generates new access and refresh tokens.
+   * Throws UnauthorizedException if the token is invalid or expired.
+   *
+   * @param refreshToken - The refresh token to verify and use for generating new tokens.
+   * @returns A promise that resolves to a JwtTokenResponseDto with new tokens.
+   * @throws UnauthorizedException if the refresh token is invalid or expired.
+   */
   async refreshJwtTokens(refreshToken: string): Promise<JwtTokenResponseDto> {
     try {
       const payload = this.jwtService.verify(refreshToken, {
@@ -103,6 +138,16 @@ export class AuthService {
     }
   }
 
+  /**
+   * Creates a new user with the provided data.
+   * Validates input, checks password strength, and ensures passwords match.
+   * Hashes the password before saving the user.
+   * Throws BadRequestException for invalid input or weak passwords.
+   *
+   * @param data - The sign-up data for the new user.
+   * @returns A promise that resolves to a UserResponseDto for the created user.
+   * @throws BadRequestException for invalid input or weak passwords.
+   */
   async createUser(data: SignUpUserRequesteDto): Promise<UserResponseDto> {
     try {
       if (!data) {
