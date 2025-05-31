@@ -1,6 +1,4 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { Role } from 'generated/prisma';
-import { CreateUserRepositoryModel } from 'src/repository-models/user.models';
 
 /**
  * Data Transfer Object for creating and updating user requests.

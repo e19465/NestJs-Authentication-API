@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { SignUpUserRequesteDto } from 'src/dto/request/auth';
+import { SignUpUserRequesteDto } from 'src/dto/request/auth.request.dto';
 import { UsersRepository } from '../users/users.repository';
 import { isStringsEqual, normalizeEmail } from 'src/helpers/shared.helper';
 import { passwordStrengthChecker, hashPassword } from 'src/helpers/auth-helper';
 import { Role } from 'generated/prisma';
-import { UserResponseDto } from 'src/dto/response/user';
+import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 
 @Injectable()

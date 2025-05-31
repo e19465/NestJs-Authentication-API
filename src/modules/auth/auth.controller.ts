@@ -1,5 +1,5 @@
 import { Body, Controller, HttpStatus, Post } from '@nestjs/common';
-import { SignUpUserRequesteDto } from 'src/dto/request/auth';
+import { SignUpUserRequesteDto } from 'src/dto/request/auth.request.dto';
 import { AuthService } from './auth.service';
 import { ApiResponse } from 'src/helpers/api-response.helper';
 

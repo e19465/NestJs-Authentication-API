@@ -5,13 +5,12 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Query,
   Response,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserRequesteDto } from 'src/dto/request/user';
+import { UpdateUserRequesteDto } from 'src/dto/request/user.request.dto';
 import { ApiResponse } from 'src/helpers/api-response.helper';
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

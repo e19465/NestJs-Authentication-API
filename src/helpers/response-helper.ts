@@ -1,5 +1,5 @@
 import { Role } from 'generated/prisma';
-import { UserResponseDto } from 'src/dto/response/user';
+import { UserResponseDto } from 'src/dto/response/user.response.dto';
 
 /**
  * Transforms a user object into a UserResponseDto.
