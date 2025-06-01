@@ -1,6 +1,5 @@
-/\*\*
+# NestJS Documentation
 
-- NestJS Documentation
 - ***
 - NestJS is a progressive Node.js framework for building efficient, reliable, and scalable server-side applications.
 - It leverages TypeScript and is heavily inspired by Angular's architecture (modules, services, controllers, decorators).
@@ -90,4 +89,3 @@ nest g provider <name>
 - Passport Integration: https://docs.nestjs.com/security/authentication
 - JWT Guide: https://docs.nestjs.com/security/authentication#jwt-functionality
 - Testing: https://docs.nestjs.com/fundamentals/testing
-  \*/

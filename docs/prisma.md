@@ -1,5 +1,3 @@
-/\*\*
-
 # Prisma Documentation
 
 ---
@@ -97,5 +95,3 @@ This opens a web-based GUI where you can view, edit, and search your data easily
 
 - Official documentation: https://www.prisma.io/docs
 - GitHub repository: https://github.com/prisma/prisma
-
-\*/
