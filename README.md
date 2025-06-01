@@ -13,7 +13,7 @@ This is an API built using **NestJS**, designed with modern backend architecture
 
 - 🔐 Uses **JWT access/refresh tokens** (via Authorization header and Cookies)
 - 🔁 **Token refresh logic** is implemented securely
-- 🧩 Integrated **Microsoft Graph API**
+- 🧩 Integrated **Microsoft Graph API** with **Azure**
 - 🧭 Authentication strategies:
   - Local Strategy
   - JWT Strategy
