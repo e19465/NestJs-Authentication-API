@@ -1,5 +1,5 @@
 import { IsEmail, IsString, IsOptional } from 'class-validator';
-import { UpdateUserRepositoryModel } from 'src/repository-models/user.models';
+import { UpdateUserRepositoryModel } from 'src/repository/models/user.models';
 
 /**
  * Data Transfer Object for updating user requests.

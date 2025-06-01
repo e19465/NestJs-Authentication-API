@@ -132,8 +132,8 @@ export class AuthController {
 /**
  * Full Endpoints List
  *
- * POST   <base_url>/auth/sign-up  -> Register a new user
- * POST   <base_url>/auth/sign-in  -> Login user and generate JWT tokens
- * POST   <base_url>/auth/refresh  -> Refresh JWT tokens using a valid refresh token
- * DELETE <base_url>/auth/sign-out -> Logout user and clear cookies
+ * POST   <base_url>/auth/sign-up   -> Register a new user
+ * POST   <base_url>/auth/sign-in   -> Login user and generate JWT tokens
+ * POST   <base_url>/auth/refresh   -> Refresh JWT tokens using a valid refresh token
+ * DELETE <base_url>/auth/sign-out  -> Logout user and clear cookies
  */

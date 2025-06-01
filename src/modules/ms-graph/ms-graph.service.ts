@@ -1,0 +1,327 @@
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import axios from 'axios';
+import {
+  GET_ACCOUNT_DETAILS_URL,
+  LIST_ITEMS_IN_ONE_DRIVE_URL,
+} from 'src/constants/microsoft.constants';
+import {
+  ListItemsInOneDriveResponseDto,
+  MicrosoftAccountResponseDto,
+} from 'src/dto/response/microsoft.response.dto';
+import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
+import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
+import { CustomLoggerService } from 'src/custom-logger/custom-logger.service';
+import { MicrosoftSettings } from 'src/settings';
+import { StoreMicrosoftCredentialsDto } from 'src/repository/models/microsoft.models';
+
+@Injectable()
+export class MsGraphService {
+  private readonly logger = new CustomLoggerService(MsGraphService.name);
+  constructor(
+    private readonly microsoftRepository: UserMicrosoftCredentialRepository,
+    private readonly tokenCryptoHelper: TokenCryptoHelper,
+  ) {}
+
+  /**
+   * Refreshes the Microsoft OAuth tokens for a given user.
+   *
+   * This method retrieves the stored Microsoft credentials for the specified user,
+   * decrypts the refresh token, and requests new tokens from the Microsoft OAuth endpoint.
+   * The new access, refresh, and ID tokens are encrypted and stored back in the repository.
+   * Returns the new access token.
+   *
+   * @param userId - The unique identifier of the user whose tokens are to be refreshed.
+   * @returns A promise that resolves to the new access token and refresh tokens as strings.
+   * @throws {BadRequestException} If no Microsoft credentials are found for the user.
+   * @throws {UnauthorizedException} If the token refresh process fails.
+   */
+  private async refreshMicrosoftTokens(userId: string): Promise<{
+    access: string;
+    refresh: string;
+    id_token: string;
+  }> {
+    try {
+      const credentials =
+        await this.microsoftRepository.retrieveCredentialsForUser(userId);
+      if (!credentials) {
+        throw new BadRequestException(
+          'No Microsoft credentials found for user',
+        );
+      }
+
+      const decryptedRefreshToken = this.tokenCryptoHelper.decrypt(
+        credentials.refreshToken,
+      );
+
+      const tokenUrl = MicrosoftSettings.tokenUrl;
+
+      const params = new URLSearchParams({
+        client_id: MicrosoftSettings.clientID ?? '',
+        scope: MicrosoftSettings.scope.join(' '),
+        refresh_token: decryptedRefreshToken ?? '',
+        grant_type: 'refresh_token',
+        client_secret: MicrosoftSettings.clientSecret ?? '',
+      });
+
+      const response = await axios.post(tokenUrl, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      const accessToken = response.data.access_token;
+      const refreshToken = response.data.refresh_token;
+      const idToken = response.data.id_token;
+
+      const newCredentials: StoreMicrosoftCredentialsDto = {
+        userId: userId,
+        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
+        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
+        idToken: this.tokenCryptoHelper.encrypt(idToken),
+      };
+
+      await this.microsoftRepository.storeMicrosoftCredentials(newCredentials);
+      return {
+        access: accessToken,
+        refresh: refreshToken,
+        id_token: idToken,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Failed to refresh Microsoft tokens');
+    }
+  }
+
+  /**
+   * Retrieves and decrypts Microsoft credentials (access and refresh tokens) for a given user from the database.
+   *
+   * @param userId - The unique identifier of the user whose credentials are to be retrieved.
+   * @returns A promise that resolves to an object containing the decrypted access and refresh tokens.
+   * @throws BadRequestException If no Microsoft credentials are found for the specified user.
+   */
+  private async getCredentialsFromDb(userId: string): Promise<{
+    access: string;
+    refresh: string;
+  }> {
+    const credentials =
+      await this.microsoftRepository.retrieveCredentialsForUser(userId);
+    if (!credentials) {
+      throw new BadRequestException('No Microsoft credentials found for user');
+    }
+
+    const decrypteAccessToken = this.tokenCryptoHelper.decrypt(
+      credentials.accessToken,
+    );
+
+    const decrypteRefreshToken = this.tokenCryptoHelper.decrypt(
+      credentials.refreshToken,
+    );
+
+    return {
+      access: decrypteAccessToken,
+      refresh: decrypteRefreshToken,
+    };
+  }
+
+  /**
+   * Attempts to fetch data from the Microsoft Graph API using the provided access token.
+   *
+   * @param userId - The unique identifier of the user making the request.
+   * @param url - The Microsoft Graph API endpoint URL to fetch data from.
+   * @param token - The OAuth2 access token used for authentication with Microsoft Graph.
+   * @returns A promise that resolves with the Axios response from the Microsoft Graph API.
+   * @throws {UnauthorizedException} If the request to Microsoft Graph fails or the token is invalid.
+   */
+  private async tryMsGraphWithAccessToken(
+    userId: string,
+    url: string,
+    token: string,
+  ): Promise<any> {
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching data from Microsoft Graph for user ${userId}: ${error.message}`,
+        MsGraphService.name,
+        error.stack,
+      );
+      throw new UnauthorizedException(
+        'Unable to retrieve Microsoft account data',
+      );
+    }
+  }
+
+  /**
+   * Attempts to access the Microsoft Graph API using the stored access token for the specified user.
+   * If the access token is invalid or expired, it tries to refresh the token and retries the request.
+   *
+   * @param userId - The unique identifier of the user whose Microsoft credentials are being used.
+   * @param url - The Microsoft Graph API endpoint to be accessed.
+   * @returns A promise that resolves with the response from the Microsoft Graph API.
+   * @throws {UnauthorizedException} If unable to retrieve or refresh the Microsoft access token.
+   */
+  private async continueMsGraphWithTokenRefresh(
+    userId: string,
+    url: string,
+  ): Promise<any> {
+    try {
+      const credentials = await this.getCredentialsFromDb(userId);
+      const accessToken = credentials.access;
+      if (!accessToken) {
+        throw new UnauthorizedException(
+          'Unable to retrieve access token for Microsoft account',
+        );
+      }
+
+      const response = await this.tryMsGraphWithAccessToken(
+        userId,
+        url,
+        accessToken,
+      );
+
+      return response;
+    } catch (error) {
+      try {
+        const tokenResponse = await this.refreshMicrosoftTokens(userId);
+        const newAccessToken = tokenResponse.access;
+        if (!newAccessToken) {
+          throw new UnauthorizedException(
+            'Unable to refresh Microsoft access token',
+          );
+        }
+
+        const newResponse = await this.tryMsGraphWithAccessToken(
+          userId,
+          url,
+          newAccessToken,
+        );
+
+        return newResponse;
+      } catch (refreshError) {
+        this.logger.error(
+          `Error refreshing Microsoft tokens for user ${userId}: ${refreshError.message}`,
+          MsGraphService.name,
+          refreshError.stack,
+        );
+        throw new UnauthorizedException(
+          'Unable to refresh Microsoft access token',
+        );
+      }
+    }
+  }
+
+  /**
+   * Exchanges an authorization code for Microsoft OAuth tokens and securely stores them for the specified user.
+   *
+   * This method sends a POST request to the Microsoft token endpoint with the provided authorization code,
+   * retrieves the access, refresh, and ID tokens, encrypts them, and stores them in the repository associated with the user.
+   *
+   * @param code - The authorization code received from the Microsoft OAuth flow.
+   * @param userId - The unique identifier of the user to associate the tokens with.
+   * @returns A promise that resolves when the tokens have been successfully stored.
+   * @throws {UnauthorizedException} If the token exchange or storage process fails.
+   */
+  async getMicrosoftTokens(code: string, userId: string): Promise<void> {
+    try {
+      const tokenUrl = MicrosoftSettings.tokenUrl;
+
+      const params = new URLSearchParams({
+        client_id: MicrosoftSettings.clientID ?? '',
+        scope: MicrosoftSettings.scope.join(' '),
+        code: code ?? '',
+        redirect_uri: MicrosoftSettings.redirectUrl ?? '',
+        grant_type: 'authorization_code',
+        client_secret: MicrosoftSettings.clientSecret ?? '',
+      });
+
+      const response = await axios.post(tokenUrl, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      const accessToken = response.data.access_token;
+      const refreshToken = response.data.refresh_token;
+      const idToken = response.data.id_token;
+
+      const credentials: StoreMicrosoftCredentialsDto = {
+        userId: userId,
+        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
+        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
+        idToken: this.tokenCryptoHelper.encrypt(idToken),
+      };
+
+      await this.microsoftRepository.storeMicrosoftCredentials(credentials);
+      return;
+    } catch (error) {
+      throw new UnauthorizedException('Failed to obtain tokens from Microsoft');
+    }
+  }
+
+  /**
+   * Retrieves the Microsoft account details for a given user.
+   *
+   * This method attempts to fetch the Microsoft account information associated with the specified `userId`
+   * by making a request to the Microsoft Graph API. If the access token is expired or invalid, it will
+   * attempt to refresh the token and retry the request.
+   *
+   * @param userId - The unique identifier of the user whose Microsoft account details are to be retrieved.
+   * @returns A promise that resolves to a `MicrosoftAccountResponseDto` containing the account details.
+   * @throws Will throw an error if the request fails or if token refresh is unsuccessful.
+   */
+  async getMicrosoftAccount(
+    userId: string,
+  ): Promise<MicrosoftAccountResponseDto> {
+    try {
+      const url = GET_ACCOUNT_DETAILS_URL;
+      const response = await this.continueMsGraphWithTokenRefresh(userId, url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves a list of items from the user's OneDrive using the Microsoft Graph API.
+   *
+   * @param userId - The unique identifier of the user whose OneDrive items are to be listed.
+   * @returns A promise that resolves to a {@link ListItemsInOneDriveResponseDto} containing the list of OneDrive items.
+   * @throws Will throw an error if the request to the Microsoft Graph API fails or if token refresh is unsuccessful.
+   */
+  async listItemsInOneDrive(
+    userId: string,
+  ): Promise<ListItemsInOneDriveResponseDto> {
+    try {
+      const url = LIST_ITEMS_IN_ONE_DRIVE_URL;
+      const response = await this.continueMsGraphWithTokenRefresh(userId, url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Refreshes the Microsoft authentication tokens for a given user.
+   *
+   * @param userId - The unique identifier of the user whose Microsoft tokens need to be refreshed.
+   * @returns A promise that resolves with the refreshed token response.
+   * @throws Rethrows any error encountered during the token refresh process.
+   */
+  async refreshMsTokens(userId: string) {
+    try {
+      const response = await this.refreshMicrosoftTokens(userId);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+}

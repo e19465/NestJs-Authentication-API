@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UpdateUserRequesteDto } from 'src/dto/request/user.request.dto';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
-import { UsersRepository } from './users.repository';
+import { UsersRepository } from '../../repository/users.repository';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { normalizeEmail, normalizeRole } from 'src/helpers/shared.helper';
 

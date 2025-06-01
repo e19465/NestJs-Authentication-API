@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { SignUpUserRequesteDto } from 'src/dto/request/auth.request.dto';
-import { UsersRepository } from '../users/users.repository';
+import { UsersRepository } from '../../repository/users.repository';
 import { isStringsEqual, normalizeEmail } from 'src/helpers/shared.helper';
 import {
   passwordStrengthChecker,
