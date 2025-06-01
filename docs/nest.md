@@ -96,7 +96,9 @@ nest g provider <name>
 ```
 
 - 🧠 USEFUL RESOURCES
-- ***
+
+---
+
 - Docs: https://docs.nestjs.com
 - Passport Integration: https://docs.nestjs.com/security/authentication
 - JWT Guide: https://docs.nestjs.com/security/authentication#jwt-functionality
