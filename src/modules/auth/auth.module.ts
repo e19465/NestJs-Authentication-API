@@ -7,8 +7,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthLocalStrategy } from 'src/stratergies/auth.local.stratergy';
 import { AuthJwtStrategy } from 'src/stratergies/auth.jwt.stratergy';
-import { AuthMicrosoftStrategy } from 'src/stratergies/auth.microsoft.strategy';
-import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 
 @Module({
   imports: [
@@ -17,14 +15,8 @@ import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
     UsersModule,
     JwtModule.register({}),
   ],
-  providers: [
-    AuthService,
-    AuthLocalStrategy,
-    AuthJwtStrategy,
-    AuthMicrosoftStrategy,
-    TokenCryptoHelper,
-  ],
+  providers: [AuthService, AuthLocalStrategy, AuthJwtStrategy],
   controllers: [AuthController],
-  exports: [TokenCryptoHelper, AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}

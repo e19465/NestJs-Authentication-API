@@ -5,6 +5,7 @@ import { DatabaseModule } from 'src/database/database.module';
 import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
 import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 import { AuthModule } from '../auth/auth.module';
+import { AuthMicrosoftStrategy } from 'src/stratergies/auth.microsoft.strategy';
 
 @Module({
   imports: [DatabaseModule, AuthModule],
@@ -13,6 +14,7 @@ import { AuthModule } from '../auth/auth.module';
     MsGraphService,
     UserMicrosoftCredentialRepository,
     TokenCryptoHelper,
+    AuthMicrosoftStrategy,
   ],
 })
 export class MsGraphModule {}

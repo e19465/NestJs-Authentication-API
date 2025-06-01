@@ -15,12 +15,8 @@ import { Role } from 'generated/prisma';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { JwtService } from '@nestjs/jwt';
-import { JwtSettings, MicrosoftSettings } from 'src/settings';
+import { JwtSettings } from 'src/settings';
 import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
-import axios from 'axios';
-import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
-import { StoreMicrosoftCredentialsDto } from 'src/repository/models/microsoft.models';
-import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 
 /**
  * AuthService provides authentication and user management functionalities.
@@ -36,8 +32,6 @@ export class AuthService {
   constructor(
     private readonly userRepository: UsersRepository,
     private readonly jwtService: JwtService,
-    private readonly tokenCryptoHelper: TokenCryptoHelper,
-    private readonly microsoftRepository: UserMicrosoftCredentialRepository,
   ) {}
 
   /**
@@ -195,115 +189,6 @@ export class AuthService {
       return userResponse;
     } catch (error) {
       throw error;
-    }
-  }
-
-  /**
-   * Refreshes the Microsoft OAuth tokens for a given user.
-   *
-   * This method retrieves the stored Microsoft credentials for the specified user,
-   * decrypts the refresh token, and requests new tokens from the Microsoft OAuth endpoint.
-   * The new access, refresh, and ID tokens are encrypted and stored back in the repository.
-   * Returns the new access token.
-   *
-   * @param userId - The unique identifier of the user whose tokens are to be refreshed.
-   * @returns A promise that resolves to the new access token as a string.
-   * @throws {BadRequestException} If no Microsoft credentials are found for the user.
-   * @throws {UnauthorizedException} If the token refresh process fails.
-   */
-  async refreshMicrosoftTokens(userId: string): Promise<string> {
-    try {
-      const credentials =
-        await this.microsoftRepository.retrieveCredentialsForUser(userId);
-      if (!credentials) {
-        throw new BadRequestException(
-          'No Microsoft credentials found for user',
-        );
-      }
-
-      const decryptedRefreshToken = this.tokenCryptoHelper.decrypt(
-        credentials.refreshToken,
-      );
-
-      const tokenUrl = MicrosoftSettings.tokenUrl;
-
-      const params = new URLSearchParams({
-        client_id: MicrosoftSettings.clientID ?? '',
-        scope: MicrosoftSettings.scope.join(' '),
-        refresh_token: decryptedRefreshToken ?? '',
-        grant_type: 'refresh_token',
-        client_secret: MicrosoftSettings.clientSecret ?? '',
-      });
-
-      const response = await axios.post(tokenUrl, params.toString(), {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      const idToken = response.data.id_token;
-
-      const newCredentials: StoreMicrosoftCredentialsDto = {
-        userId: userId,
-        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
-        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
-        idToken: this.tokenCryptoHelper.encrypt(idToken),
-      };
-
-      await this.microsoftRepository.storeMicrosoftCredentials(newCredentials);
-      return accessToken;
-    } catch (error) {
-      throw new UnauthorizedException('Failed to refresh Microsoft tokens');
-    }
-  }
-
-  /**
-   * Exchanges an authorization code for Microsoft OAuth tokens and securely stores them for the specified user.
-   *
-   * This method sends a POST request to the Microsoft token endpoint with the provided authorization code,
-   * retrieves the access, refresh, and ID tokens, encrypts them, and stores them in the repository associated with the user.
-   *
-   * @param code - The authorization code received from the Microsoft OAuth flow.
-   * @param userId - The unique identifier of the user to associate the tokens with.
-   * @returns A promise that resolves when the tokens have been successfully stored.
-   * @throws {UnauthorizedException} If the token exchange or storage process fails.
-   */
-  async getMicrosoftTokens(code: string, userId: string): Promise<void> {
-    try {
-      const tokenUrl = MicrosoftSettings.tokenUrl;
-
-      const params = new URLSearchParams({
-        client_id: MicrosoftSettings.clientID ?? '',
-        scope: MicrosoftSettings.scope.join(' '),
-        code: code ?? '',
-        redirect_uri: MicrosoftSettings.redirectUrl ?? '',
-        grant_type: 'authorization_code',
-        client_secret: MicrosoftSettings.clientSecret ?? '',
-      });
-
-      const response = await axios.post(tokenUrl, params.toString(), {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      const idToken = response.data.id_token;
-
-      const credentials: StoreMicrosoftCredentialsDto = {
-        userId: userId,
-        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
-        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
-        idToken: this.tokenCryptoHelper.encrypt(idToken),
-      };
-
-      await this.microsoftRepository.storeMicrosoftCredentials(credentials);
-      return;
-    } catch (error) {
-      throw new UnauthorizedException('Failed to obtain tokens from Microsoft');
     }
   }
 }
