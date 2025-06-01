@@ -9,7 +9,6 @@ import { AuthLocalStrategy } from 'src/stratergies/auth.local.stratergy';
 import { AuthJwtStrategy } from 'src/stratergies/auth.jwt.stratergy';
 import { AuthMicrosoftStrategy } from 'src/stratergies/auth.microsoft.strategy';
 import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
-import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
 
 @Module({
   imports: [
@@ -26,6 +25,6 @@ import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repo
     TokenCryptoHelper,
   ],
   controllers: [AuthController],
-  exports: [TokenCryptoHelper],
+  exports: [TokenCryptoHelper, AuthService],
 })
 export class AuthModule {}

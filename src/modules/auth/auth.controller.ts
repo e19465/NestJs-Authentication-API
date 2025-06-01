@@ -137,6 +137,7 @@ export class AuthController {
   @Get('microsoft')
   @UseGuards(AuthMicrosoftGuard)
   async microsoftLogin() {
+    // This returns HTML page. when authentication is successful,
     // Redirection happens automatically
   }
 
@@ -193,6 +194,6 @@ export class AuthController {
  * POST   <base_url>/auth/refresh   -> Refresh JWT tokens using a valid refresh token
  * DELETE <base_url>/auth/sign-out  -> Logout user and clear cookies
  * GET    <base_url>/auth/microsoft -> Redirect to Microsoft OAuth login
- * POST    <base_url>/auth/microsoft/obtain-tokens/ -> Obtain Microsoft tokens using the authorization code
- * POST    <base_url>/auth/microsoft/refresh-microsoft-tokens/ -> Refresh Microsoft tokens
+ * POST   <base_url>/auth/microsoft/obtain-tokens/ -> Obtain Microsoft tokens using the authorization code
+ * POST   <base_url>/auth/microsoft/refresh-microsoft-tokens/ -> Refresh Microsoft tokens
  */

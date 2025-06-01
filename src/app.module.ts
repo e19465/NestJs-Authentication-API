@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
-import { UsersModule, AuthModule } from './modules';
+import { UsersModule, AuthModule, MsGraphModule } from './modules';
 import { CustomLoggerModule } from './custom-logger/custom-logger.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -35,6 +35,7 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     UsersModule,
     AuthModule,
+    MsGraphModule,
     DatabaseModule,
     CustomLoggerModule,
   ],

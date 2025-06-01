@@ -198,7 +198,20 @@ export class AuthService {
     }
   }
 
-  async refreshMicrosoftTokens(userId: string): Promise<void> {
+  /**
+   * Refreshes the Microsoft OAuth tokens for a given user.
+   *
+   * This method retrieves the stored Microsoft credentials for the specified user,
+   * decrypts the refresh token, and requests new tokens from the Microsoft OAuth endpoint.
+   * The new access, refresh, and ID tokens are encrypted and stored back in the repository.
+   * Returns the new access token.
+   *
+   * @param userId - The unique identifier of the user whose tokens are to be refreshed.
+   * @returns A promise that resolves to the new access token as a string.
+   * @throws {BadRequestException} If no Microsoft credentials are found for the user.
+   * @throws {UnauthorizedException} If the token refresh process fails.
+   */
+  async refreshMicrosoftTokens(userId: string): Promise<string> {
     try {
       const credentials =
         await this.microsoftRepository.retrieveCredentialsForUser(userId);
@@ -240,12 +253,23 @@ export class AuthService {
       };
 
       await this.microsoftRepository.storeMicrosoftCredentials(newCredentials);
-      return;
+      return accessToken;
     } catch (error) {
       throw new UnauthorizedException('Failed to refresh Microsoft tokens');
     }
   }
 
+  /**
+   * Exchanges an authorization code for Microsoft OAuth tokens and securely stores them for the specified user.
+   *
+   * This method sends a POST request to the Microsoft token endpoint with the provided authorization code,
+   * retrieves the access, refresh, and ID tokens, encrypts them, and stores them in the repository associated with the user.
+   *
+   * @param code - The authorization code received from the Microsoft OAuth flow.
+   * @param userId - The unique identifier of the user to associate the tokens with.
+   * @returns A promise that resolves when the tokens have been successfully stored.
+   * @throws {UnauthorizedException} If the token exchange or storage process fails.
+   */
   async getMicrosoftTokens(code: string, userId: string): Promise<void> {
     try {
       const tokenUrl = MicrosoftSettings.tokenUrl;
