@@ -7,6 +7,34 @@
 
 ---
 
+# 📘 About This Project
+
+This is an API built using **NestJS**, designed with modern backend architecture and secure authentication. Key features include:
+
+- 🔐 Uses **JWT access/refresh tokens** (via Authorization header and Cookies)
+- 🔁 **Token refresh logic** is implemented securely
+- 🧩 Integrated **Microsoft Graph API**
+- 🧭 Authentication strategies:
+  - Local Strategy
+  - JWT Strategy
+  - Microsoft Strategy
+- 🛡️ Authorization Guards:
+  - Local Guard
+  - JWT Guard
+  - Microsoft Guard
+  - Admin Guard
+- 🔑 Passwords hashed with **bcrypt**
+- 🔒 Encrypted storage of Microsoft JWT tokens
+- 🧬 Uses **Prisma ORM**
+- 🗄️ Uses **Neon Database**
+- 🌐 Custom **CORS configurations**
+- 🚨 Global **Exception Filter** for error handling
+- 📜 **Logging Service** implemented
+- 📂 Repository pattern used for database access
+- 🚦 Implements **Rate Limiting** on endpoints
+
+---
+
 # Nest JS
 
 ## Description
