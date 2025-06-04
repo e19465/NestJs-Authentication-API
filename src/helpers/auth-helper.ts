@@ -1,4 +1,5 @@
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
+import { Response } from 'express';
 
 /**
  * Checks if a given password meets the specified strength criteria.
@@ -27,6 +28,7 @@ export const passwordStrengthChecker = (password: string): boolean => {
  * hashPassword('mySecurePassword123!') // returns a hashed password
  */
 export const hashPassword = async (password: string): Promise<string> => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   return await bcrypt.hash(password, 10);
 };
 
@@ -42,6 +44,7 @@ export const comparePassword = async (
   password: string,
   hashed: string,
 ): Promise<boolean> => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   return await bcrypt.compare(password, hashed);
 };
 
@@ -62,7 +65,7 @@ export const comparePassword = async (
  */
 export const setCookieToResponse = (
   name: 'access' | 'refresh',
-  response: any,
+  response: Response,
   value: string,
   expires: number,
 ) => {

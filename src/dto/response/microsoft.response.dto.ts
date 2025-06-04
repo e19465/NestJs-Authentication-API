@@ -1,8 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsString,
-  IsOptional,
-  IsObject,
   IsNumber,
   ValidateNested,
   IsDateString,

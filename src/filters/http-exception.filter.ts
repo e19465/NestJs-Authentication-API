@@ -4,7 +4,6 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  LoggerService,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { CustomLoggerService } from 'src/custom-logger/custom-logger.service';
@@ -38,26 +37,44 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
 
     console.log('Exception: ', exception);
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const isHttpException = (ex: unknown): ex is HttpException =>
+      ex instanceof HttpException;
 
-    const resBody =
-      exception instanceof HttpException ? exception.getResponse() : null;
+    const status = isHttpException(exception)
+      ? exception.getStatus()
+      : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
-      typeof resBody === 'string'
-        ? resBody
-        : typeof resBody === 'object' &&
-            resBody !== null &&
-            'message' in resBody
-          ? (resBody as any).message
-          : exception.message || 'Internal server error';
+    const resBody = isHttpException(exception) ? exception.getResponse() : null;
+
+    let message: string | string[] = 'Internal server error';
+
+    function hasMessageProperty(obj: unknown): obj is { message: unknown } {
+      return typeof obj === 'object' && obj !== null && 'message' in obj;
+    }
+
+    function isMessageStringOrArray(
+      message: unknown,
+    ): message is string | string[] {
+      return typeof message === 'string' || Array.isArray(message);
+    }
+
+    if (typeof resBody === 'string') {
+      message = resBody;
+    } else if (
+      hasMessageProperty(resBody) &&
+      isMessageStringOrArray(resBody.message)
+    ) {
+      message = resBody.message;
+    } else if (
+      hasMessageProperty(exception) &&
+      isMessageStringOrArray(exception.message)
+    ) {
+      message = exception.message;
+    }
 
     // Log the error using the custom logger
     this.logger.error(
-      `Exception caught: ${message}`,
+      `Exception caught: ${Array.isArray(message) ? message.join(', ') : message}`,
       GlobalExceptionsFilter.name,
       exception instanceof Error ? exception.stack : undefined,
     );

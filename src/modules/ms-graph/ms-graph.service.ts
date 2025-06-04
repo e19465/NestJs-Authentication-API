@@ -3,7 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import {
   GET_ACCOUNT_DETAILS_URL,
   LIST_ITEMS_IN_ONE_DRIVE_URL,
@@ -16,7 +16,8 @@ import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
 import { CustomLoggerService } from 'src/custom-logger/custom-logger.service';
 import { MicrosoftSettings } from 'src/settings';
-import { StoreMicrosoftCredentialsDto } from 'src/repository/models/microsoft.models';
+import { StoreMicrosoftCredentialsRepositoryModel } from 'src/repository/models/microsoft.models';
+import { MicrosoftJwtTokenResponse } from 'src/types/microsoft';
 
 @Injectable()
 export class MsGraphService {
@@ -73,11 +74,13 @@ export class MsGraphService {
         },
       });
 
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      const idToken = response.data.id_token;
+      const data = response.data as MicrosoftJwtTokenResponse;
 
-      const newCredentials: StoreMicrosoftCredentialsDto = {
+      const accessToken = data.access_token;
+      const refreshToken = data.refresh_token;
+      const idToken = data.id_token;
+
+      const newCredentials: StoreMicrosoftCredentialsRepositoryModel = {
         userId: userId,
         accessToken: this.tokenCryptoHelper.encrypt(accessToken),
         refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
@@ -90,8 +93,10 @@ export class MsGraphService {
         refresh: refreshToken,
         id_token: idToken,
       };
-    } catch (error) {
-      throw new UnauthorizedException('Failed to refresh Microsoft tokens');
+    } catch (error: any) {
+      throw new UnauthorizedException(
+        'Failed to refresh Microsoft tokens: ' + error,
+      );
     }
   }
 
@@ -148,11 +153,11 @@ export class MsGraphService {
       });
 
       return response;
-    } catch (error) {
+    } catch (err) {
       this.logger.error(
-        `Error fetching data from Microsoft Graph for user ${userId}: ${error.message}`,
+        `Error fetching data from Microsoft Graph for user ${userId}`,
         MsGraphService.name,
-        error.stack,
+        (err as Error).stack || err,
       );
       throw new UnauthorizedException(
         'Unable to retrieve Microsoft account data',
@@ -182,14 +187,14 @@ export class MsGraphService {
         );
       }
 
-      const response = await this.tryMsGraphWithAccessToken(
+      const response = (await this.tryMsGraphWithAccessToken(
         userId,
         url,
         accessToken,
-      );
+      )) as AxiosResponse;
 
       return response;
-    } catch (error) {
+    } catch {
       try {
         const tokenResponse = await this.refreshMicrosoftTokens(userId);
         const newAccessToken = tokenResponse.access;
@@ -199,18 +204,20 @@ export class MsGraphService {
           );
         }
 
-        const newResponse = await this.tryMsGraphWithAccessToken(
+        const newResponse = (await this.tryMsGraphWithAccessToken(
           userId,
           url,
           newAccessToken,
-        );
+        )) as AxiosResponse;
 
         return newResponse;
       } catch (refreshError) {
         this.logger.error(
-          `Error refreshing Microsoft tokens for user ${userId}: ${refreshError.message}`,
+          `Error refreshing Microsoft tokens for user ${userId}: ${
+            (refreshError as Error).message
+          }`,
           MsGraphService.name,
-          refreshError.stack,
+          (refreshError as Error).stack || refreshError,
         );
         throw new UnauthorizedException(
           'Unable to refresh Microsoft access token',
@@ -249,11 +256,13 @@ export class MsGraphService {
         },
       });
 
-      const accessToken = response.data.access_token;
-      const refreshToken = response.data.refresh_token;
-      const idToken = response.data.id_token;
+      const data = response.data as MicrosoftJwtTokenResponse;
 
-      const credentials: StoreMicrosoftCredentialsDto = {
+      const accessToken = data.access_token;
+      const refreshToken = data.refresh_token;
+      const idToken = data.id_token;
+
+      const credentials: StoreMicrosoftCredentialsRepositoryModel = {
         userId: userId,
         accessToken: this.tokenCryptoHelper.encrypt(accessToken),
         refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
@@ -263,7 +272,9 @@ export class MsGraphService {
       await this.microsoftRepository.storeMicrosoftCredentials(credentials);
       return;
     } catch (error) {
-      throw new UnauthorizedException('Failed to obtain tokens from Microsoft');
+      throw new UnauthorizedException(
+        'Failed to obtain tokens from Microsoft: ' + error,
+      );
     }
   }
 
@@ -283,8 +294,12 @@ export class MsGraphService {
   ): Promise<MicrosoftAccountResponseDto> {
     try {
       const url = GET_ACCOUNT_DETAILS_URL;
-      const response = await this.continueMsGraphWithTokenRefresh(userId, url);
-      return response.data;
+      const response = (await this.continueMsGraphWithTokenRefresh(
+        userId,
+        url,
+      )) as AxiosResponse;
+      const data = response.data as MicrosoftAccountResponseDto;
+      return data;
     } catch (error) {
       throw error;
     }
@@ -302,8 +317,12 @@ export class MsGraphService {
   ): Promise<ListItemsInOneDriveResponseDto> {
     try {
       const url = LIST_ITEMS_IN_ONE_DRIVE_URL;
-      const response = await this.continueMsGraphWithTokenRefresh(userId, url);
-      return response.data;
+      const response = (await this.continueMsGraphWithTokenRefresh(
+        userId,
+        url,
+      )) as AxiosResponse;
+      const data = response.data as ListItemsInOneDriveResponseDto;
+      return data;
     } catch (error) {
       throw error;
     }
@@ -316,10 +335,10 @@ export class MsGraphService {
    * @returns A promise that resolves with the refreshed token response.
    * @throws Rethrows any error encountered during the token refresh process.
    */
-  async refreshMsTokens(userId: string) {
+  async refreshMsTokens(userId: string): Promise<void> {
     try {
-      const response = await this.refreshMicrosoftTokens(userId);
-      return response;
+      await this.refreshMicrosoftTokens(userId);
+      return;
     } catch (error) {
       throw error;
     }

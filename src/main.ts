@@ -12,7 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Middleware should be registered before anything else
-  app.use(cookieParser());
+  app.use((cookieParser as unknown as (...args: any[]) => any)());
 
   // Global filters should be set early
   app.useGlobalFilters(new GlobalExceptionsFilter());
@@ -36,4 +36,8 @@ async function bootstrap() {
     console.log(`Nest JS Server is running on PORT: ${PORT}`);
   });
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('Error during application bootstrap:', error);
+  process.exit(1); // Exit the process if bootstrap fails
+});

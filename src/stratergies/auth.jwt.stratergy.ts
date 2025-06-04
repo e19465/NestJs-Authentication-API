@@ -1,7 +1,9 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
 import { JwtSettings } from 'src/settings';
+import { JwtPayload } from 'src/types/auth';
 
 /**
  * JWT authentication strategy for NestJS using Passport.
@@ -22,8 +24,8 @@ export class AuthJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
        * Extracts JWT from request cookies or Authorization header.
        * Throws UnauthorizedException if no token is found.
        */
-      jwtFromRequest: (req) => {
-        let access_token = null;
+      jwtFromRequest: (req: Request) => {
+        let access_token: string | null = null;
 
         if (req && req.cookies) {
           access_token = req.cookies['access'];
@@ -52,7 +54,7 @@ export class AuthJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @param payload - The decoded JWT payload.
    * @returns The payload if validation is successful.
    */
-  validate(payload: any) {
+  validate(payload: JwtPayload): JwtPayload {
     return payload;
   }
 }

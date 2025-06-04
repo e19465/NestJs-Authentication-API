@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { StoreMicrosoftCredentialsDto } from './models/microsoft.models';
+import { StoreMicrosoftCredentialsRepositoryModel } from './models/microsoft.models';
 import { MicrosoftTokenInsertResponseDto } from 'src/dto/response/microsoft.response.dto';
 
 @Injectable()
@@ -8,7 +8,7 @@ export class UserMicrosoftCredentialRepository {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async storeMicrosoftCredentials(
-    data: StoreMicrosoftCredentialsDto,
+    data: StoreMicrosoftCredentialsRepositoryModel,
   ): Promise<MicrosoftTokenInsertResponseDto> {
     try {
       const response =

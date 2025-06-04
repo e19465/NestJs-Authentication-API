@@ -62,52 +62,46 @@ export const isStringsEqual = (
  * @returns The normalized email address. If the input is not a valid email string, returns the original input.
  * @throws {TypeError} If the input is not a string.
  */
-export const normalizeEmail = (eMail) => {
-  var PLUS_ONLY = /\+.*$/;
-  var PLUS_AND_DOT = /\.|\+.*$/g;
-  var normalizeableProviders = {
-    'gmail.com': {
-      cut: PLUS_AND_DOT,
-    },
-    'googlemail.com': {
-      cut: PLUS_AND_DOT,
-      aliasOf: 'gmail.com',
-    },
-    'hotmail.com': {
-      cut: PLUS_ONLY,
-    },
-    'live.com': {
-      cut: PLUS_AND_DOT,
-    },
-    'outlook.com': {
-      cut: PLUS_ONLY,
-    },
+export const normalizeEmail = (eMail: string): string => {
+  const PLUS_ONLY = /\+.*$/;
+  const PLUS_AND_DOT = /\.|\+.*$/g;
+
+  const normalizeableProviders: {
+    [key: string]: { cut: RegExp; aliasOf?: string };
+  } = {
+    'gmail.com': { cut: PLUS_AND_DOT },
+    'googlemail.com': { cut: PLUS_AND_DOT, aliasOf: 'gmail.com' },
+    'hotmail.com': { cut: PLUS_ONLY },
+    'live.com': { cut: PLUS_AND_DOT },
+    'outlook.com': { cut: PLUS_ONLY },
   };
 
-  if (typeof eMail != 'string') {
+  if (typeof eMail !== 'string') {
     throw new TypeError('normalize-email expects a string');
   }
 
-  var email = eMail.toLowerCase();
-  var emailParts = email.split(/@/);
+  const email = eMail.toLowerCase();
+  const emailParts = email.split('@');
 
   if (emailParts.length !== 2) {
     return eMail;
   }
 
-  var username = emailParts[0];
-  var domain = emailParts[1];
+  let [username, domain] = emailParts;
 
-  if (normalizeableProviders.hasOwnProperty(domain)) {
-    if (normalizeableProviders[domain].hasOwnProperty('cut')) {
-      username = username.replace(normalizeableProviders[domain].cut, '');
+  if (Object.prototype.hasOwnProperty.call(normalizeableProviders, domain)) {
+    const provider = normalizeableProviders[domain];
+
+    if (Object.prototype.hasOwnProperty.call(provider, 'cut')) {
+      username = username.replace(provider.cut, '');
     }
-    if (normalizeableProviders[domain].hasOwnProperty('aliasOf')) {
-      domain = normalizeableProviders[domain].aliasOf;
+
+    if (Object.prototype.hasOwnProperty.call(provider, 'aliasOf')) {
+      domain = provider.aliasOf!;
     }
   }
 
-  return username + '@' + domain;
+  return `${username}@${domain}`;
 };
 
 /**

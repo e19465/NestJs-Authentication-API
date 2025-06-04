@@ -40,7 +40,8 @@ export class ApiResponse {
       statusCode,
       success: true,
       message: message || null,
-      data: data || null,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: data,
     };
 
     if (response) {
@@ -76,6 +77,7 @@ export class ApiResponse {
       statusCode,
       success: false,
       message,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: data || null,
     });
   }

@@ -59,7 +59,7 @@ export class UsersRepository {
     id: string,
     email: string,
     role: Role,
-  ): Promise<User[] | null> {
+  ): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {
@@ -74,10 +74,7 @@ export class UsersRepository {
     }
   }
 
-  async findUsersByIdAndEmail(
-    id: string,
-    email: string,
-  ): Promise<User[] | null> {
+  async findUsersByIdAndEmail(id: string, email: string): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {
@@ -91,7 +88,7 @@ export class UsersRepository {
     }
   }
 
-  async findUsersByIdAndRole(id: string, role: Role): Promise<User[] | null> {
+  async findUsersByIdAndRole(id: string, role: Role): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {
@@ -105,10 +102,7 @@ export class UsersRepository {
     }
   }
 
-  async findUsersByEmailAndRole(
-    email: string,
-    role: Role,
-  ): Promise<User[] | null> {
+  async findUsersByEmailAndRole(email: string, role: Role): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {
@@ -122,7 +116,7 @@ export class UsersRepository {
     }
   }
 
-  async findUsersById(id: string): Promise<User[] | null> {
+  async findUsersById(id: string): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {
@@ -135,20 +129,21 @@ export class UsersRepository {
     }
   }
 
-  async findUsersByEmail(email: string): Promise<User[] | null> {
+  async findUsersByEmail(email: string): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {
           email: email,
         },
       });
+      console.log('Found users by email:', users);
       return users;
     } catch (error) {
       throw error;
     }
   }
 
-  async findUsersByRole(role: Role): Promise<User[] | null> {
+  async findUsersByRole(role: Role): Promise<User[]> {
     try {
       const users = await this.databaseService.user.findMany({
         where: {

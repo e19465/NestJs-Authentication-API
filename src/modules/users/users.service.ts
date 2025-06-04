@@ -4,6 +4,7 @@ import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { UsersRepository } from '../../repository/users.repository';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { normalizeEmail, normalizeRole } from 'src/helpers/shared.helper';
+import { User } from 'generated/prisma';
 
 /**
  * UsersService provides methods for managing user accounts.
@@ -90,7 +91,7 @@ export class UsersService {
       throw new BadRequestException('Invalid role provided');
     }
 
-    let users;
+    let users: UserResponseDto[] = [];
 
     // All three provided
     if (userId && normalizedEmail && normalizedRole) {
@@ -126,7 +127,11 @@ export class UsersService {
       users = await this.userRepository.findUsersByRole(normalizedRole);
     }
 
-    const responseUsers = users?.map((user) => toUserResponseDto(user));
+    if (!users) {
+      return [];
+    }
+
+    const responseUsers = users.map((user: User) => toUserResponseDto(user));
     return responseUsers;
   }
 

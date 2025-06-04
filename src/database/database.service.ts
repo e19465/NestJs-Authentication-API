@@ -21,6 +21,7 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
           console.log(`⏳ Retrying in ${this.retryDelayMs / 1000} seconds...`);
           await this.delay(this.retryDelayMs);
         } else {
+          console.log('Occured Error: ', error);
           console.error('🚨 All retry attempts failed. Exiting...');
           process.exit(1); // Exit the process after all retries fail
         }

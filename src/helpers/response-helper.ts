@@ -1,4 +1,4 @@
-import { Role } from 'generated/prisma';
+import { Role, User } from 'generated/prisma';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 
 /**
@@ -9,7 +9,7 @@ import { UserResponseDto } from 'src/dto/response/user.response.dto';
  * @returns UserResponseDto
  * @throws Error if required fields are missing or invalid.
  */
-export const toUserResponseDto = (user: any): UserResponseDto => {
+export const toUserResponseDto = (user: User): UserResponseDto => {
   if (!user) {
     throw new Error('User object is required.');
   }

@@ -7,7 +7,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 import { Role } from 'generated/prisma';
+import { JwtPayload } from 'src/types/auth';
 
 @Injectable()
 export class AdminGuard extends AuthGuard('jwt') implements CanActivate {
@@ -20,8 +22,8 @@ export class AdminGuard extends AuthGuard('jwt') implements CanActivate {
     const isAuthenticated = await super.canActivate(context);
     if (!isAuthenticated) return false;
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest<Request>();
+    const user = request.user as JwtPayload;
 
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenException('Access denied');

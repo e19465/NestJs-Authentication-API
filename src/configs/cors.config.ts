@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   CORS_ALLOWED_ORIGINS,
   CORS_ALLOWED_HEADERS,
@@ -19,7 +20,7 @@ import {
  * @property methods - Specifies the HTTP methods that are allowed for CORS requests, as defined by `CORS_ALLOWED_METHODS`.
  */
 const corsOptions = {
-  origin: (origin, callback) => {
+  origin: (origin: string, callback) => {
     if (CORS_ALLOWED_ORIGINS.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {

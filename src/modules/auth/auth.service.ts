@@ -17,6 +17,7 @@ import { toUserResponseDto } from 'src/helpers/response-helper';
 import { JwtService } from '@nestjs/jwt';
 import { JwtSettings } from 'src/settings';
 import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
+import { JwtPayload } from 'src/types/auth';
 
 /**
  * AuthService provides authentication and user management functionalities.
@@ -83,7 +84,7 @@ export class AuthService {
    * @param user - The user for whom to generate tokens.
    * @returns A promise that resolves to a JwtTokenResponseDto containing access and refresh tokens.
    */
-  async generateJwtTokens(user: UserResponseDto): Promise<JwtTokenResponseDto> {
+  generateJwtTokens(user: UserResponseDto): JwtTokenResponseDto {
     try {
       const payload = {
         id: user.id,
@@ -121,7 +122,7 @@ export class AuthService {
    */
   async refreshJwtTokens(refreshToken: string): Promise<JwtTokenResponseDto> {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
+      const payload: JwtPayload = this.jwtService.verify(refreshToken, {
         secret: JwtSettings.refreshTokenSecret,
       });
       const users = await this.userRepository.findUsersById(payload.id);
@@ -133,7 +134,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
       return this.generateJwtTokens(toUserResponseDto(user));
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }

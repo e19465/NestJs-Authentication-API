@@ -56,11 +56,11 @@ export class MsGraphController {
     try {
       const requestUser = request.user as DecodedJwtAccessToken;
       const userId = requestUser.id;
-      const serviceResponse = await this.msGraphService.refreshMsTokens(userId);
+      await this.msGraphService.refreshMsTokens(userId);
       return ApiResponse.success(
         null,
         'Microsoft tokens refreshed successfully',
-        serviceResponse,
+        null,
         HttpStatus.OK,
       );
     } catch (error) {

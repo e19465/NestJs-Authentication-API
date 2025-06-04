@@ -15,7 +15,7 @@ import {
 import { AuthService } from './auth.service';
 import { ApiResponse } from 'src/helpers/api-response.helper';
 import { AuthLocalGuard } from 'src/guards/auth.local.guard';
-import { Request } from 'express';
+import { Request, Response as ExpressResponse } from 'express';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { JwtSettings } from 'src/settings';
 import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
@@ -42,14 +42,14 @@ export class AuthController {
 
   @Post('sign-in') // POST - /users/sign-in
   @UseGuards(AuthLocalGuard)
-  async loginUser(
-    @Response({ passthrough: true }) response: any,
+  loginUser(
+    @Response({ passthrough: true }) response: ExpressResponse,
     @Req() request: Request,
   ) {
     try {
       const user = request.user as UserResponseDto;
       const tokens: JwtTokenResponseDto =
-        await this.authService.generateJwtTokens(user);
+        this.authService.generateJwtTokens(user);
 
       setCookieToResponse(
         'access',
@@ -78,7 +78,7 @@ export class AuthController {
 
   @Post('refresh') // POST - /auth/refresh
   async refreshTokens(
-    @Response({ passthrough: true }) response: any,
+    @Response({ passthrough: true }) response: ExpressResponse,
     @Body() body: RefreshTokenRequestDto,
   ) {
     try {
@@ -111,7 +111,7 @@ export class AuthController {
   }
 
   @Delete('sign-out') // POST - /auth/sign-out
-  async logoutUser(@Response({ passthrough: true }) response: any) {
+  logoutUser(@Response({ passthrough: true }) response: ExpressResponse) {
     try {
       // Clear cookies
       response.clearCookie('access');
