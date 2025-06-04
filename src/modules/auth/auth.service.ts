@@ -11,13 +11,13 @@ import {
   hashPassword,
   comparePassword,
 } from 'src/helpers/auth-helper';
-import { Role } from 'generated/prisma';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { JwtService } from '@nestjs/jwt';
 import { JwtSettings } from 'src/settings';
 import { JwtTokenResponseDto } from 'src/dto/response/auth.response.dto';
 import { JwtPayload } from 'src/types/auth';
+import { Role } from '@prisma/client';
 
 /**
  * AuthService provides authentication and user management functionalities.
@@ -89,6 +89,7 @@ export class AuthService {
       const payload = {
         id: user.id,
         email: user.email,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         role: user.role,
       };
 
@@ -183,6 +184,7 @@ export class AuthService {
         name: data.name,
         email: normalizedEmail,
         password: hashedPassword,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         role: Role.USER, // Default role is USER
       });
 

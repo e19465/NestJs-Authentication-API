@@ -1,4 +1,3 @@
-// src/guards/admin.guard.ts
 import {
   Injectable,
   CanActivate,
@@ -7,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { Role } from '@prisma/client';
 import { Request } from 'express';
-import { Role } from 'generated/prisma';
 import { JwtPayload } from 'src/types/auth';
 
 @Injectable()
@@ -25,6 +24,7 @@ export class AdminGuard extends AuthGuard('jwt') implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const user = request.user as JwtPayload;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenException('Access denied');
     }

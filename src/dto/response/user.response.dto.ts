@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import {
   IsBoolean,
   IsDateString,
@@ -6,7 +7,6 @@ import {
   IsNotEmpty,
   IsString,
 } from 'class-validator';
-import { Role } from 'generated/prisma';
 
 /**
  * Data Transfer Object representing the response structure for a user entity.
@@ -32,6 +32,7 @@ export class UserResponseDto {
   @IsEmail()
   email: string;
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   @IsEnum(Role)
   @IsNotEmpty()
   role: Role;

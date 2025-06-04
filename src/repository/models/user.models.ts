@@ -5,7 +5,7 @@ import {
   IsString,
   IsOptional,
 } from 'class-validator';
-import { Role } from 'generated/prisma';
+import { Role } from '@prisma/client';
 
 /**
  * Repository model for creating a new user.
@@ -27,6 +27,7 @@ export class CreateUserRepositoryModel {
   @IsEmail()
   email: string;
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   @IsEnum(Role)
   @IsNotEmpty()
   role: Role;

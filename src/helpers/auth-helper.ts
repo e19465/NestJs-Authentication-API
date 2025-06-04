@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 
 /**
@@ -28,7 +28,6 @@ export const passwordStrengthChecker = (password: string): boolean => {
  * hashPassword('mySecurePassword123!') // returns a hashed password
  */
 export const hashPassword = async (password: string): Promise<string> => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   return await bcrypt.hash(password, 10);
 };
 
@@ -44,7 +43,6 @@ export const comparePassword = async (
   password: string,
   hashed: string,
 ): Promise<boolean> => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   return await bcrypt.compare(password, hashed);
 };
 

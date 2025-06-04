@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import {
   OIDCStrategy,
   IOIDCStrategyOptionWithRequest,
   IOIDCStrategyVerifyCallback,
+  IOIDCProfile,
 } from 'passport-azure-ad';
 import { MicrosoftSettings } from 'src/settings';
 
@@ -13,7 +17,6 @@ export class AuthMicrosoftStrategy extends PassportStrategy(
   'microsoft',
 ) {
   constructor() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super({
       identityMetadata: MicrosoftSettings.identityMetadata,
       clientID: MicrosoftSettings.clientID,
@@ -27,8 +30,26 @@ export class AuthMicrosoftStrategy extends PassportStrategy(
     } as IOIDCStrategyOptionWithRequest);
   }
 
-  validate(profile: unknown, done: IOIDCStrategyVerifyCallback): void {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    done(null, profile);
+  validate(profile: IOIDCProfile, done: IOIDCStrategyVerifyCallback): void {
+    try {
+      console.log('Microsoft profile:', profile);
+      const user = {
+        ...(profile?.oid && { id: profile.oid }),
+        ...(profile?.upn || profile?.preferred_username
+          ? { email: profile.upn || profile.preferred_username }
+          : {}),
+        ...(profile?.name || profile?.displayName
+          ? { name: profile.name || profile.displayName }
+          : {}),
+      };
+      // You can perform DB operations here if needed (e.g., find or create user)
+      done(null, user);
+    } catch (error) {
+      done(error, null);
+    }
   }
+
+  // validate(profile: unknown, done: IOIDCStrategyVerifyCallback): void {
+  //   done(null, profile);
+  // }
 }

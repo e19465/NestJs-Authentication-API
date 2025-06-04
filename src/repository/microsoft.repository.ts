@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { StoreMicrosoftCredentialsRepositoryModel } from './models/microsoft.models';
@@ -12,7 +14,7 @@ export class UserMicrosoftCredentialRepository {
   ): Promise<MicrosoftTokenInsertResponseDto> {
     try {
       const response =
-        await this.databaseService.userMicrosoftCredential.upsert({
+        (await this.databaseService.userMicrosoftCredential.upsert({
           where: { userId: data.userId },
           update: {
             accessToken: data.accessToken,
@@ -25,7 +27,7 @@ export class UserMicrosoftCredentialRepository {
             refreshToken: data.refreshToken,
             idToken: data.idToken,
           },
-        });
+        })) as MicrosoftTokenInsertResponseDto;
       return response;
     } catch (error) {
       throw error;
@@ -37,9 +39,9 @@ export class UserMicrosoftCredentialRepository {
   ): Promise<MicrosoftTokenInsertResponseDto | null> {
     try {
       const response =
-        await this.databaseService.userMicrosoftCredential.findUnique({
+        (await this.databaseService.userMicrosoftCredential.findUnique({
           where: { userId },
-        });
+        })) as MicrosoftTokenInsertResponseDto | null;
       return response;
     } catch (error) {
       throw error;

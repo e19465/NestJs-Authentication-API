@@ -1,4 +1,4 @@
-import { Role } from 'generated/prisma';
+import { Role } from '@prisma/client';
 
 /**
  * Converts a comma-separated string, an array of strings, or null into an array of non-empty, trimmed strings.
@@ -115,9 +115,11 @@ export const normalizeEmail = (eMail: string): string => {
  * normalizeRole('user') // returns Role.USER
  * normalizeRole('invalid') // returns null
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export const normalizeRole = (role: string): Role | null => {
   return role
-    ? Object.values(Role).find((r) => r.toLowerCase() === role.toLowerCase()) ||
+    ? // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
+      Object.values(Role).find((r) => r.toLowerCase() === role.toLowerCase()) ||
         null
     : null;
 };

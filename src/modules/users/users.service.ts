@@ -4,7 +4,7 @@ import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { UsersRepository } from '../../repository/users.repository';
 import { toUserResponseDto } from 'src/helpers/response-helper';
 import { normalizeEmail, normalizeRole } from 'src/helpers/shared.helper';
-import { User } from 'generated/prisma';
+import { User } from '@prisma/client';
 
 /**
  * UsersService provides methods for managing user accounts.
@@ -85,19 +85,21 @@ export class UsersService {
     }
 
     const normalizedEmail = email ? normalizeEmail(email) : undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const normalizedRole = role ? normalizeRole(role) : undefined;
 
     if (role && !normalizedRole) {
       throw new BadRequestException('Invalid role provided');
     }
 
-    let users: UserResponseDto[] = [];
+    let users: User[] | null = null;
 
     // All three provided
     if (userId && normalizedEmail && normalizedRole) {
       users = await this.userRepository.findUsersByIdEmailRole(
         userId,
         normalizedEmail,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         normalizedRole,
       );
     }
@@ -110,11 +112,13 @@ export class UsersService {
     } else if (userId && normalizedRole) {
       users = await this.userRepository.findUsersByIdAndRole(
         userId,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         normalizedRole,
       );
     } else if (normalizedEmail && normalizedRole) {
       users = await this.userRepository.findUsersByEmailAndRole(
         normalizedEmail,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         normalizedRole,
       );
     }
@@ -124,6 +128,7 @@ export class UsersService {
     } else if (normalizedEmail) {
       users = await this.userRepository.findUsersByEmail(normalizedEmail);
     } else if (normalizedRole) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       users = await this.userRepository.findUsersByRole(normalizedRole);
     }
 
@@ -131,7 +136,7 @@ export class UsersService {
       return [];
     }
 
-    const responseUsers = users.map((user: User) => toUserResponseDto(user));
+    const responseUsers = users?.map((user) => toUserResponseDto(user));
     return responseUsers;
   }
 
