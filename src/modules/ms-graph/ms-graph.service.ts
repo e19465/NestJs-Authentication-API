@@ -228,6 +228,26 @@ export class MsGraphService {
   }
 
   /**
+   * Constructs and returns the Microsoft OAuth2 authorization redirect URI.
+   *
+   * This method builds the URL that the client should use to initiate the Microsoft OAuth2
+   * authentication flow. It includes all required query parameters such as client_id, response_type,
+   * redirect_uri, response_mode, and scope, using the values defined in MicrosoftSettings.
+   *
+   * @returns {string} The full Microsoft OAuth2 authorization URL with query parameters.
+   */
+  async getMicrosoftRedirectUri(): Promise<string> {
+    const params = new URLSearchParams({
+      client_id: MicrosoftSettings.clientID!,
+      response_type: MicrosoftSettings.responseType,
+      redirect_uri: MicrosoftSettings.redirectUrl,
+      response_mode: MicrosoftSettings.responseMode,
+      scope: MicrosoftSettings.scope.join(' '),
+    });
+    return `${MicrosoftSettings.loginUrl}?${params.toString()}`;
+  }
+
+  /**
    * Exchanges an authorization code for Microsoft OAuth tokens and securely stores them for the specified user.
    *
    * This method sends a POST request to the Microsoft token endpoint with the provided authorization code,

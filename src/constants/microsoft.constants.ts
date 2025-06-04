@@ -13,4 +13,4 @@ export const SEARCH_IN_ONE_DRIVE_URL =
   "https://graph.microsoft.com/v1.0/me/drive/root/search(q='finance')?select=name,id,webUrl";
 
 export const TOKEN_URL =
-  "tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',";
+  'https://login.microsoftonline.com/common/oauth2/v2.0/token';

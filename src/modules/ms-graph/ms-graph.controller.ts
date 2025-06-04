@@ -20,9 +20,24 @@ export class MsGraphController {
 
   @Get('authenticate')
   @UseGuards(AuthMicrosoftGuard)
-  async microsoftLogin() {
+  async microsoftLoginHtml() {
     // This returns HTML page. when authentication is successful,
     // Redirection happens automatically
+  }
+
+  @Get('auth/login')
+  async microsoftLoginUrl() {
+    try {
+      const redirectUri = await this.msGraphService.getMicrosoftRedirectUri();
+      return ApiResponse.success(
+        null,
+        'Microsoft Login Redirect URI obtain successfull',
+        { redirectUri },
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Post('auth/obtain-tokens')

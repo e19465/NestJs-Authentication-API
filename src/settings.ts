@@ -50,6 +50,7 @@ export const MicrosoftSettings = {
   clientSecret: MICROSOFT_CLIENT_SECRET,
   clientSecretId: MICROSOFT_CLIENT_SECRET_ID,
   identityMetadata: `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/v2.0/.well-known/openid-configuration`,
+  loginUrl: `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize`,
   responseType: 'code',
   responseMode: 'query',
   redirectUrl: `http://localhost:3000/auth/microsoft/redirect`,
