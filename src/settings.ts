@@ -44,7 +44,6 @@ const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
 const MICROSOFT_CLIENT_SECRET_ID = process.env.MICROSOFT_CLIENT_SECRET_ID;
 
 export const MicrosoftSettings = {
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   clientID: MICROSOFT_CLIENT_ID,
   objectID: MICROSOFT_OBJECT_ID,
   tenantID: MICROSOFT_TENANT_ID,

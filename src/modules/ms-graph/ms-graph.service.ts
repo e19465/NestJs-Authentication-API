@@ -7,6 +7,7 @@ import axios, { AxiosResponse } from 'axios';
 import {
   GET_ACCOUNT_DETAILS_URL,
   LIST_ITEMS_IN_ONE_DRIVE_URL,
+  TOKEN_URL,
 } from 'src/constants/microsoft.constants';
 import {
   ListItemsInOneDriveResponseDto,
@@ -58,7 +59,7 @@ export class MsGraphService {
         credentials.refreshToken,
       );
 
-      const tokenUrl = MicrosoftSettings.tokenUrl;
+      const tokenUrl = TOKEN_URL;
 
       const params = new URLSearchParams({
         client_id: MicrosoftSettings.clientID ?? '',
@@ -239,7 +240,7 @@ export class MsGraphService {
    */
   async getMicrosoftTokens(code: string, userId: string): Promise<void> {
     try {
-      const tokenUrl = MicrosoftSettings.tokenUrl;
+      const tokenUrl = TOKEN_URL;
 
       const params = new URLSearchParams({
         client_id: MicrosoftSettings.clientID ?? '',

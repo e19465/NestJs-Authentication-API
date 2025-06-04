@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   Injectable,
@@ -89,7 +92,6 @@ export class AuthService {
       const payload = {
         id: user.id,
         email: user.email,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         role: user.role,
       };
 
@@ -184,7 +186,6 @@ export class AuthService {
         name: data.name,
         email: normalizedEmail,
         password: hashedPassword,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         role: Role.USER, // Default role is USER
       });
 
