@@ -115,7 +115,9 @@ export class MsGraphService {
     const credentials =
       await this.microsoftRepository.retrieveCredentialsForUser(userId);
     if (!credentials) {
-      throw new BadRequestException('No Microsoft credentials found for user');
+      throw new BadRequestException(
+        "Unable to find the user's microsoft account. Please sign in again",
+      );
     }
 
     const decrypteAccessToken = this.tokenCryptoHelper.decrypt(
@@ -179,15 +181,27 @@ export class MsGraphService {
     userId: string,
     url: string,
   ): Promise<any> {
+    let accessToken: string | null = null;
+
     try {
       const credentials = await this.getCredentialsFromDb(userId);
-      const accessToken = credentials.access;
+      accessToken = credentials.access;
       if (!accessToken) {
         throw new UnauthorizedException(
           'Unable to retrieve access token for Microsoft account',
         );
       }
+    } catch (error) {
+      throw error;
+    }
 
+    if (!accessToken) {
+      throw new UnauthorizedException(
+        'Unable to find the credentials for microsoft account. Please sign in again',
+      );
+    }
+
+    try {
       const response = (await this.tryMsGraphWithAccessToken(
         userId,
         url,
@@ -359,6 +373,22 @@ export class MsGraphService {
   async refreshMsTokens(userId: string): Promise<void> {
     try {
       await this.refreshMicrosoftTokens(userId);
+      return;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Disconnects a user's Microsoft account by deleting their Microsoft credentials.
+   *
+   * @param userId - The unique identifier of the user whose Microsoft account should be disconnected.
+   * @returns A promise that resolves when the credentials have been deleted.
+   * @throws Will rethrow any error encountered during the deletion process.
+   */
+  async disconnectMicrosoftAccount(userId: string): Promise<void> {
+    try {
+      await this.microsoftRepository.deleteMicrosoftCredentials(userId);
       return;
     } catch (error) {
       throw error;

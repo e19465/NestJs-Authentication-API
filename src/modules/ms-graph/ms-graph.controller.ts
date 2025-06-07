@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Post,
@@ -110,6 +111,23 @@ export class MsGraphController {
         null,
         'Files list fetched successfully',
         data,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Delete('auth/disconnect-microsoft-account')
+  @UseGuards(AuthJwtGuard)
+  async disconnectMicrosoftAccount(@Req() request: Request) {
+    try {
+      const user = request.user as DecodedJwtAccessToken;
+      await this.msGraphService.disconnectMicrosoftAccount(user.id);
+      return ApiResponse.success(
+        null,
+        'Microsoft account disconnected successfully',
+        null,
         HttpStatus.OK,
       );
     } catch (error) {
