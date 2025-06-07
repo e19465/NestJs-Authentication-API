@@ -26,9 +26,9 @@ export class MsGraphController {
   }
 
   @Get('auth/login')
-  async microsoftLoginUrl() {
+  microsoftLoginUrl() {
     try {
-      const redirectUri = await this.msGraphService.getMicrosoftRedirectUri();
+      const redirectUri = this.msGraphService.getMicrosoftRedirectUri();
       return ApiResponse.success(
         null,
         'Microsoft Login Redirect URI obtain successfull',

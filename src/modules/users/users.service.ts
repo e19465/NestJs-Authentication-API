@@ -85,7 +85,6 @@ export class UsersService {
     }
 
     const normalizedEmail = email ? normalizeEmail(email) : undefined;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const normalizedRole = role ? normalizeRole(role) : undefined;
 
     if (role && !normalizedRole) {
@@ -99,7 +98,6 @@ export class UsersService {
       users = await this.userRepository.findUsersByIdEmailRole(
         userId,
         normalizedEmail,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         normalizedRole,
       );
     }
@@ -112,13 +110,11 @@ export class UsersService {
     } else if (userId && normalizedRole) {
       users = await this.userRepository.findUsersByIdAndRole(
         userId,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         normalizedRole,
       );
     } else if (normalizedEmail && normalizedRole) {
       users = await this.userRepository.findUsersByEmailAndRole(
         normalizedEmail,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         normalizedRole,
       );
     }
@@ -128,7 +124,6 @@ export class UsersService {
     } else if (normalizedEmail) {
       users = await this.userRepository.findUsersByEmail(normalizedEmail);
     } else if (normalizedRole) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       users = await this.userRepository.findUsersByRole(normalizedRole);
     }
 

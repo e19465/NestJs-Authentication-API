@@ -115,11 +115,9 @@ export const normalizeEmail = (eMail: string): string => {
  * normalizeRole('user') // returns Role.USER
  * normalizeRole('invalid') // returns null
  */
-// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export const normalizeRole = (role: string): Role | null => {
   return role
-    ? // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
-      Object.values(Role).find((r) => r.toLowerCase() === role.toLowerCase()) ||
+    ? Object.values(Role).find((r) => r.toLowerCase() === role.toLowerCase()) ||
         null
     : null;
 };

@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import {
   BadRequestException,
   ConflictException,
@@ -52,7 +48,7 @@ export class UsersRepository {
 
   async getAllUsers(): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany()) as User[];
+      const users = await this.databaseService.user.findMany();
       return users;
     } catch (error) {
       throw error;
@@ -65,13 +61,13 @@ export class UsersRepository {
     role: Role,
   ): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           id: id,
           email: email,
           role: role,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;
@@ -80,12 +76,12 @@ export class UsersRepository {
 
   async findUsersByIdAndEmail(id: string, email: string): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           id: id,
           email: email,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;
@@ -94,12 +90,12 @@ export class UsersRepository {
 
   async findUsersByIdAndRole(id: string, role: Role): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           id: id,
           role: role,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;
@@ -108,12 +104,12 @@ export class UsersRepository {
 
   async findUsersByEmailAndRole(email: string, role: Role): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           email: email,
           role: role,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;
@@ -122,11 +118,11 @@ export class UsersRepository {
 
   async findUsersById(id: string): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           id: id,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;
@@ -135,11 +131,11 @@ export class UsersRepository {
 
   async findUsersByEmail(email: string): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           email: email,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;
@@ -148,11 +144,11 @@ export class UsersRepository {
 
   async findUsersByRole(role: Role): Promise<User[]> {
     try {
-      const users = (await this.databaseService.user.findMany({
+      const users = await this.databaseService.user.findMany({
         where: {
           role: role,
         },
-      })) as User[];
+      });
       return users;
     } catch (error) {
       throw error;

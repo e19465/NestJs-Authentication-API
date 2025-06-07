@@ -24,7 +24,6 @@ export class AdminGuard extends AuthGuard('jwt') implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const user = request.user as JwtPayload;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenException('Access denied');
     }

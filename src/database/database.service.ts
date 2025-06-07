@@ -9,7 +9,6 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
   async onModuleInit() {
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         await this.$connect();
         console.log('✅ Database connection established successfully');
         return;

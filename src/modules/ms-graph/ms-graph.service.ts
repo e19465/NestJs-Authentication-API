@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
 import {
-  GET_ACCOUNT_DETAILS_URL,
-  LIST_ITEMS_IN_ONE_DRIVE_URL,
-  TOKEN_URL,
+  MS_GRAPH_GET_ACCOUNT_DETAILS_URL,
+  MS_GRAPH_LIST_ITEMS_IN_ONE_DRIVE_URL,
+  MS_GRAPH_TOKEN_URL,
 } from 'src/constants/microsoft.constants';
 import {
   ListItemsInOneDriveResponseDto,
@@ -59,7 +59,7 @@ export class MsGraphService {
         credentials.refreshToken,
       );
 
-      const tokenUrl = TOKEN_URL;
+      const tokenUrl = MS_GRAPH_TOKEN_URL;
 
       const params = new URLSearchParams({
         client_id: MicrosoftSettings.clientID ?? '',
@@ -236,7 +236,7 @@ export class MsGraphService {
    *
    * @returns {string} The full Microsoft OAuth2 authorization URL with query parameters.
    */
-  async getMicrosoftRedirectUri(): Promise<string> {
+  getMicrosoftRedirectUri(): string {
     const params = new URLSearchParams({
       client_id: MicrosoftSettings.clientID!,
       response_type: MicrosoftSettings.responseType,
@@ -260,7 +260,7 @@ export class MsGraphService {
    */
   async getMicrosoftTokens(code: string, userId: string): Promise<void> {
     try {
-      const tokenUrl = TOKEN_URL;
+      const tokenUrl = MS_GRAPH_TOKEN_URL;
 
       const params = new URLSearchParams({
         client_id: MicrosoftSettings.clientID ?? '',
@@ -314,7 +314,7 @@ export class MsGraphService {
     userId: string,
   ): Promise<MicrosoftAccountResponseDto> {
     try {
-      const url = GET_ACCOUNT_DETAILS_URL;
+      const url = MS_GRAPH_GET_ACCOUNT_DETAILS_URL;
       const response = (await this.continueMsGraphWithTokenRefresh(
         userId,
         url,
@@ -337,7 +337,7 @@ export class MsGraphService {
     userId: string,
   ): Promise<ListItemsInOneDriveResponseDto> {
     try {
-      const url = LIST_ITEMS_IN_ONE_DRIVE_URL;
+      const url = MS_GRAPH_LIST_ITEMS_IN_ONE_DRIVE_URL;
       const response = (await this.continueMsGraphWithTokenRefresh(
         userId,
         url,
