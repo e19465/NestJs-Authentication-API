@@ -46,3 +46,16 @@ model UserMicrosoftCredential {
 
   @@index([userId], name: "idx_user_microsoft_credential_user_id") 
 }
+
+
+model UserMicrosoftOutlookCredential {
+  id          String   @id @default(cuid())
+  email      String   @unique
+  accessToken String
+  refreshToken String
+  idToken     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email], name: "idx_user_microsoft_outlook_credential_email") 
+}

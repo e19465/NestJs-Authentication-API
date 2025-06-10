@@ -16,6 +16,16 @@ export class MicrosoftTokenInsertResponseDto {
   updatedAt: Date;
 }
 
+export class MicrosoftTokenInsertResponseOutlookDto {
+  id: string;
+  email: string;
+  accessToken: string;
+  refreshToken: string;
+  idToken: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export class MicrosoftAccountResponseDto {
   '@odata.context': string;
   businessPhones: string[];

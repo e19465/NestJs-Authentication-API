@@ -1,7 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { StoreMicrosoftCredentialsRepositoryModel } from './models/microsoft.models';
-import { MicrosoftTokenInsertResponseDto } from 'src/dto/response/microsoft.response.dto';
+import {
+  StoreMicrosoftCredentialsOutlookRepositoryModel,
+  StoreMicrosoftCredentialsRepositoryModel,
+} from './models/microsoft.models';
+import {
+  MicrosoftTokenInsertResponseDto,
+  MicrosoftTokenInsertResponseOutlookDto,
+} from 'src/dto/response/microsoft.response.dto';
 
 @Injectable()
 export class UserMicrosoftCredentialRepository {
@@ -26,6 +34,31 @@ export class UserMicrosoftCredentialRepository {
             idToken: data.idToken,
           },
         })) as MicrosoftTokenInsertResponseDto;
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async storeMicrosoftCredentialsOutlook(
+    data: StoreMicrosoftCredentialsOutlookRepositoryModel,
+  ): Promise<MicrosoftTokenInsertResponseOutlookDto> {
+    try {
+      const response =
+        (await this.databaseService.userMicrosoftOutlookCredential.upsert({
+          where: { email: data.email },
+          update: {
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            idToken: data.idToken,
+          },
+          create: {
+            email: data.email,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            idToken: data.idToken,
+          },
+        })) as MicrosoftTokenInsertResponseOutlookDto;
       return response;
     } catch (error) {
       throw error;

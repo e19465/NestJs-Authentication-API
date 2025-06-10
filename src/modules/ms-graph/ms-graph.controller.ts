@@ -49,19 +49,43 @@ export class MsGraphController {
     @Body()
     data: {
       code: string;
-      redirect?: string;
     },
   ) {
     try {
       const requestUser = request.user as DecodedJwtAccessToken;
       const userId = requestUser.id;
       const code = data.code;
-      const redirect = data.redirect;
       const serviceResponse = await this.msGraphService.getMicrosoftTokens(
         code,
         userId,
-        redirect,
       );
+      return ApiResponse.success(
+        null,
+        'Microsoft tokens obtained successfully',
+        serviceResponse,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('auth/obtain-tokens-outlook-plugin')
+  async getMicrosoftTokensForOutlook(
+    @Body()
+    data: {
+      code: string;
+      redirect: string;
+    },
+  ) {
+    try {
+      const code = data.code;
+      const redirect = data.redirect;
+      const serviceResponse =
+        await this.msGraphService.getMicrosoftTokensForOutlookPlugin(
+          code,
+          redirect,
+        );
       return ApiResponse.success(
         null,
         'Microsoft tokens obtained successfully',

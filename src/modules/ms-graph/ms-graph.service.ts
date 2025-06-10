@@ -17,7 +17,10 @@ import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
 import { CustomLoggerService } from 'src/custom-logger/custom-logger.service';
 import { MicrosoftSettings } from 'src/settings';
-import { StoreMicrosoftCredentialsRepositoryModel } from 'src/repository/models/microsoft.models';
+import {
+  StoreMicrosoftCredentialsOutlookRepositoryModel,
+  StoreMicrosoftCredentialsRepositoryModel,
+} from 'src/repository/models/microsoft.models';
 import { MicrosoftJwtTokenResponse } from 'src/types/microsoft';
 
 @Injectable()
@@ -144,7 +147,7 @@ export class MsGraphService {
    * @throws {UnauthorizedException} If the request to Microsoft Graph fails or the token is invalid.
    */
   private async tryMsGraphWithAccessToken(
-    userId: string,
+    userId: string | null = null,
     url: string,
     token: string,
   ): Promise<any> {
@@ -241,53 +244,18 @@ export class MsGraphService {
     }
   }
 
-  /**
-   * Constructs and returns the Microsoft OAuth2 authorization redirect URI.
-   *
-   * This method builds the URL that the client should use to initiate the Microsoft OAuth2
-   * authentication flow. It includes all required query parameters such as client_id, response_type,
-   * redirect_uri, response_mode, and scope, using the values defined in MicrosoftSettings.
-   *
-   * @returns {string} The full Microsoft OAuth2 authorization URL with query parameters.
-   */
-  getMicrosoftRedirectUri(redirect?: string): string {
-    const params = new URLSearchParams({
-      client_id: MicrosoftSettings.clientID ?? '',
-      response_type: MicrosoftSettings.responseType,
-      redirect_uri: redirect ?? MicrosoftSettings.redirectUrl ?? '',
-      response_mode: MicrosoftSettings.responseMode,
-      scope: MicrosoftSettings.scope.join(' '),
-    });
-    return `${MicrosoftSettings.loginUrl}?${params.toString()}`;
-  }
-
-  /**
-   * Exchanges an authorization code for Microsoft OAuth tokens and securely stores them for the specified user.
-   *
-   * This method sends a POST request to the Microsoft token endpoint with the provided authorization code,
-   * retrieves the access, refresh, and ID tokens, encrypts them, and stores them in the repository associated with the user.
-   *
-   * @param code - The authorization code received from the Microsoft OAuth flow.
-   * @param userId - The unique identifier of the user to associate the tokens with.
-   * @returns A promise that resolves when the tokens have been successfully stored.
-   * @throws {UnauthorizedException} If the token exchange or storage process fails.
-   */
-  async getMicrosoftTokens(
+  private async getTokensFromMicrosoftForLogin(
     code: string,
-    userId: string,
-    redirect?: string,
-  ): Promise<{
-    access: string;
-    refresh: string;
-  }> {
+    redirect: string,
+  ): Promise<MicrosoftJwtTokenResponse> {
     try {
       const tokenUrl = MS_GRAPH_TOKEN_URL;
 
       const params = new URLSearchParams({
         client_id: MicrosoftSettings.clientID ?? '',
         scope: MicrosoftSettings.scope.join(' '),
-        code: code ?? '',
-        redirect_uri: redirect ?? MicrosoftSettings.redirectUrl ?? '',
+        code: code,
+        redirect_uri: redirect,
         grant_type: 'authorization_code',
         client_secret: MicrosoftSettings.clientSecret ?? '',
       });
@@ -299,6 +267,45 @@ export class MsGraphService {
       });
 
       const data = response.data as MicrosoftJwtTokenResponse;
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Constructs and returns the Microsoft OAuth2 authorization redirect URI.
+   *
+   * This method builds the URL that the client should use to initiate the Microsoft OAuth2
+   * authentication flow. It includes all required query parameters such as client_id, response_type,
+   * redirect_uri, response_mode, and scope, using the values defined in MicrosoftSettings.
+   *
+   * @returns {string} The full Microsoft OAuth2 authorization URL with query parameters.
+   */
+  getMicrosoftRedirectUri(redirect?: string): string {
+    const redirectUrl = redirect
+      ? redirect
+      : MicrosoftSettings.redirectUrl
+        ? MicrosoftSettings.redirectUrl
+        : '';
+
+    const params = new URLSearchParams({
+      client_id: MicrosoftSettings.clientID ?? '',
+      response_type: MicrosoftSettings.responseType,
+      redirect_uri: redirectUrl,
+      response_mode: MicrosoftSettings.responseMode,
+      scope: MicrosoftSettings.scope.join(' '),
+    });
+    return `${MicrosoftSettings.loginUrl}?${params.toString()}`;
+  }
+
+  async getMicrosoftTokens(code: string, userId: string): Promise<void> {
+    try {
+      const data: MicrosoftJwtTokenResponse =
+        await this.getTokensFromMicrosoftForLogin(
+          code,
+          MicrosoftSettings.redirectUrl,
+        );
 
       const accessToken = data.access_token;
       const refreshToken = data.refresh_token;
@@ -312,11 +319,61 @@ export class MsGraphService {
       };
 
       await this.microsoftRepository.storeMicrosoftCredentials(credentials);
-      return {
-        access: accessToken,
-        refresh: refreshToken,
+      return;
+    } catch (error: any) {
+      this.logger.error(
+        `Error obtaining Microsoft tokens for user`,
+        MsGraphService.name,
+        (error as Error).stack || error,
+      );
+      throw new UnauthorizedException(
+        'Failed to obtain tokens from Microsoft: ' + error,
+      );
+    }
+  }
+
+  async getMicrosoftTokensForOutlookPlugin(
+    code: string,
+    redirect: string,
+  ): Promise<{
+    email: string;
+  }> {
+    try {
+      const data: MicrosoftJwtTokenResponse =
+        await this.getTokensFromMicrosoftForLogin(code, redirect);
+
+      const accessToken = data.access_token;
+      const refreshToken = data.refresh_token;
+      const idToken = data.id_token;
+
+      const url = MS_GRAPH_GET_ACCOUNT_DETAILS_URL;
+
+      const response_account = (await this.tryMsGraphWithAccessToken(
+        null,
+        url,
+        accessToken,
+      )) as AxiosResponse;
+      const account_data = response_account.data as MicrosoftAccountResponseDto;
+
+      const credentials: StoreMicrosoftCredentialsOutlookRepositoryModel = {
+        email: account_data.userPrincipalName,
+        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
+        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
+        idToken: this.tokenCryptoHelper.encrypt(idToken),
       };
-    } catch (error) {
+
+      await this.microsoftRepository.storeMicrosoftCredentialsOutlook(
+        credentials,
+      );
+      return {
+        email: account_data.userPrincipalName,
+      };
+    } catch (error: any) {
+      this.logger.error(
+        `Error obtaining Microsoft tokens for user for outlook plugin`,
+        MsGraphService.name,
+        (error as Error).stack || error,
+      );
       throw new UnauthorizedException(
         'Failed to obtain tokens from Microsoft: ' + error,
       );
