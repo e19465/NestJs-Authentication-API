@@ -18,7 +18,7 @@ import { Request } from 'express';
 import { DecodedJwtAccessToken } from 'src/dto/response/auth.response.dto';
 import { AuthMicrosoftGuard } from 'src/guards/auth.microsoft.guard';
 import { EmailFromOutlookDto } from 'src/types/microsoft';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('ms-graph')
 export class MsGraphController {
@@ -171,7 +171,7 @@ export class MsGraphController {
   }
 
   @Post('upload-email-to-cloud')
-  @UseInterceptors(FileInterceptor('attachments'))
+  @UseInterceptors(FilesInterceptor('attachments'))
   receiveEmail(
     @Body() bodyDate: EmailFromOutlookDto,
     @UploadedFiles() attachments: Express.Multer.File[],
