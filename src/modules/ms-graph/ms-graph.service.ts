@@ -250,11 +250,11 @@ export class MsGraphService {
    *
    * @returns {string} The full Microsoft OAuth2 authorization URL with query parameters.
    */
-  getMicrosoftRedirectUri(): string {
+  getMicrosoftRedirectUri(redirect?: string): string {
     const params = new URLSearchParams({
-      client_id: MicrosoftSettings.clientID!,
+      client_id: MicrosoftSettings.clientID ?? '',
       response_type: MicrosoftSettings.responseType,
-      redirect_uri: MicrosoftSettings.redirectUrl,
+      redirect_uri: redirect ?? MicrosoftSettings.redirectUrl ?? '',
       response_mode: MicrosoftSettings.responseMode,
       scope: MicrosoftSettings.scope.join(' '),
     });
@@ -272,7 +272,14 @@ export class MsGraphService {
    * @returns A promise that resolves when the tokens have been successfully stored.
    * @throws {UnauthorizedException} If the token exchange or storage process fails.
    */
-  async getMicrosoftTokens(code: string, userId: string): Promise<void> {
+  async getMicrosoftTokens(
+    code: string,
+    userId: string,
+    redirect?: string,
+  ): Promise<{
+    access: string;
+    refresh: string;
+  }> {
     try {
       const tokenUrl = MS_GRAPH_TOKEN_URL;
 
@@ -280,7 +287,7 @@ export class MsGraphService {
         client_id: MicrosoftSettings.clientID ?? '',
         scope: MicrosoftSettings.scope.join(' '),
         code: code ?? '',
-        redirect_uri: MicrosoftSettings.redirectUrl ?? '',
+        redirect_uri: redirect ?? MicrosoftSettings.redirectUrl ?? '',
         grant_type: 'authorization_code',
         client_secret: MicrosoftSettings.clientSecret ?? '',
       });
@@ -305,7 +312,10 @@ export class MsGraphService {
       };
 
       await this.microsoftRepository.storeMicrosoftCredentials(credentials);
-      return;
+      return {
+        access: accessToken,
+        refresh: refreshToken,
+      };
     } catch (error) {
       throw new UnauthorizedException(
         'Failed to obtain tokens from Microsoft: ' + error,

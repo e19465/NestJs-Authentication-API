@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -27,9 +28,9 @@ export class MsGraphController {
   }
 
   @Get('auth/login')
-  microsoftLoginUrl() {
+  microsoftLoginUrl(@Query('redirect') redirect?: string) {
     try {
-      const redirectUri = this.msGraphService.getMicrosoftRedirectUri();
+      const redirectUri = this.msGraphService.getMicrosoftRedirectUri(redirect);
       return ApiResponse.success(
         null,
         'Microsoft Login Redirect URI obtain successfull',
@@ -45,15 +46,21 @@ export class MsGraphController {
   @UseGuards(AuthJwtGuard)
   async getMicrosoftTokens(
     @Req() request: Request,
-    @Body() data: { code: string },
+    @Body()
+    data: {
+      code: string;
+      redirect?: string;
+    },
   ) {
     try {
       const requestUser = request.user as DecodedJwtAccessToken;
       const userId = requestUser.id;
       const code = data.code;
+      const redirect = data.redirect;
       const serviceResponse = await this.msGraphService.getMicrosoftTokens(
         code,
         userId,
+        redirect,
       );
       return ApiResponse.success(
         null,
