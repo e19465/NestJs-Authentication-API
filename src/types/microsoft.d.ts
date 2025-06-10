@@ -7,3 +7,13 @@ export type MicrosoftJwtTokenResponse = {
   refresh_token: string;
   id_token: string;
 };
+
+export type EmailFromOutlookDto = {
+  subject: string;
+  from: string;
+  toRecipients: string;
+  ccRecipients?: string;
+  date: string;
+  bodyHtml: string;
+  userPrincipal?: string;
+};

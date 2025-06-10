@@ -7,7 +7,9 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/guards/auth.jwt.guard';
 import { MsGraphService } from './ms-graph.service';
@@ -15,6 +17,8 @@ import { ApiResponse } from 'src/helpers/api-response.helper';
 import { Request } from 'express';
 import { DecodedJwtAccessToken } from 'src/dto/response/auth.response.dto';
 import { AuthMicrosoftGuard } from 'src/guards/auth.microsoft.guard';
+import { EmailFromOutlookDto } from 'src/types/microsoft';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('ms-graph')
 export class MsGraphController {
@@ -161,6 +165,20 @@ export class MsGraphController {
         null,
         HttpStatus.OK,
       );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('upload-email-to-cloud')
+  @UseInterceptors(FileInterceptor('attachments'))
+  receiveEmail(
+    @Body() bodyDate: EmailFromOutlookDto,
+    @UploadedFiles() attachments: Express.Multer.File[],
+  ) {
+    try {
+      this.msGraphService.handleIncomingEmail(bodyDate, attachments);
+      return ApiResponse.success(null, 'Email received', null, HttpStatus.OK);
     } catch (error) {
       throw error;
     }

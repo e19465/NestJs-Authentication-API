@@ -21,7 +21,10 @@ import {
   StoreMicrosoftCredentialsOutlookRepositoryModel,
   StoreMicrosoftCredentialsRepositoryModel,
 } from 'src/repository/models/microsoft.models';
-import { MicrosoftJwtTokenResponse } from 'src/types/microsoft';
+import {
+  EmailFromOutlookDto,
+  MicrosoftJwtTokenResponse,
+} from 'src/types/microsoft';
 
 @Injectable()
 export class MsGraphService {
@@ -457,6 +460,35 @@ export class MsGraphService {
     try {
       await this.microsoftRepository.deleteMicrosoftCredentials(userId);
       return;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  handleIncomingEmail(
+    email: EmailFromOutlookDto,
+    attachments: Express.Multer.File[],
+  ): void {
+    try {
+      const userPrincipal = email.userPrincipal;
+      const subject = email.subject;
+      const from = email.from;
+      const toRecipients: string[] = JSON.parse(email.toRecipients) as string[];
+      const ccRecipients: string[] = JSON.parse(
+        email.ccRecipients || '[]',
+      ) as string[];
+      const date = new Date(email.date);
+      const bodyHtml = email.bodyHtml;
+      const attachmentsLength = attachments ? attachments.length : 0;
+
+      console.log('userPrincipal:', userPrincipal);
+      console.log('subject:', subject);
+      console.log('from:', from);
+      console.log('toRecipients:', toRecipients);
+      console.log('ccRecipients:', ccRecipients);
+      console.log('date:', date);
+      console.log('bodyHtml length:', bodyHtml.length);
+      console.log('attachments length:', attachmentsLength);
     } catch (error) {
       throw error;
     }
