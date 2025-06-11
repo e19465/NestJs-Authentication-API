@@ -191,6 +191,28 @@ export class MsGraphController {
       throw error;
     }
   }
+
+  @Post('auth/check-authentication-status-outlook-plugin')
+  async checkAuthenticationStatusOutlookPlugin(
+    @Body()
+    data: {
+      email: string;
+    },
+  ) {
+    try {
+      const email = data.email;
+      const serviceResponse =
+        await this.msGraphService.checkAuthenticationStatusOutlookPlugin(email);
+      return ApiResponse.success(
+        null,
+        'Authentication status checked successfully',
+        serviceResponse,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 /**

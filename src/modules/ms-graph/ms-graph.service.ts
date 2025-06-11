@@ -675,4 +675,30 @@ export class MsGraphService {
       throw error;
     }
   }
+
+  /**
+   * Checks the authentication status of a user for the Outlook plugin by their email address.
+   *
+   * This method attempts to retrieve the user by email and refresh their Microsoft tokens.
+   * If both operations succeed, the user is considered authenticated.
+   * If any error occurs during the process, the user is considered not authenticated.
+   *
+   * @param email - The email address of the user to check authentication for.
+   * @returns A promise that resolves to `true` if the user is authenticated, or `false` otherwise.
+   */
+  async checkAuthenticationStatusOutlookPlugin(
+    email: string,
+  ): Promise<boolean> {
+    try {
+      const user: UserResponseDto = await this.getUserFromEmail(email);
+      await this.refreshMsTokens(user.id);
+      return true; // If we reach here, the user is authenticated
+    } catch (error) {
+      console.log(
+        'Something went wrong while checking authentication status: ',
+        error,
+      );
+      return false; // If any error occurs, the user is not authenticated
+    }
+  }
 }
