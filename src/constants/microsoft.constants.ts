@@ -27,7 +27,7 @@ export const get_FILE_UPLOAD_URL = (folderId: string, fileName: string) => {
 };
 
 export const get_CHECK_FOLDER_EXISTENCE_BY_NAME_URL = (folderName: string) => {
-  return `${GRAPH_BASE_URL}/me/drive/root/children?$filter=name eq '${folderName}`;
+  return `${GRAPH_BASE_URL}/me/drive/root/children?$filter=name eq '${folderName}'`;
 };
 
 export const get_CREATE_FOLDER_URL = () => {

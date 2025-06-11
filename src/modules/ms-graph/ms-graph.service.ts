@@ -392,43 +392,48 @@ export class MsGraphService {
     userId: string,
     folderName: string,
   ): Promise<string> {
-    let folderId: string;
+    try {
+      let folderId: string;
 
-    const folderRes = (await this.continueMsGraphWithTokenRefresh(
-      userId,
-      get_CHECK_FOLDER_EXISTENCE_BY_NAME_URL(folderName),
-      'GET',
-      undefined,
-      null,
-    )) as AxiosResponse;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-    const existingFolder = folderRes?.data?.value?.find(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
-      (item: any) => item?.name === folderName && item?.folder,
-    );
-
-    if (existingFolder) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-      folderId = existingFolder?.id;
-    } else {
-      const createdFolder = (await this.continueMsGraphWithTokenRefresh(
+      const folderRes = (await this.continueMsGraphWithTokenRefresh(
         userId,
-        get_CREATE_FOLDER_URL(),
-        'POST',
+        get_CHECK_FOLDER_EXISTENCE_BY_NAME_URL(folderName),
+        'GET',
         undefined,
-        {
-          name: folderName,
-          folder: {},
-          '@microsoft.graph.conflictBehavior': 'rename',
-        },
+        null,
       )) as AxiosResponse;
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-      folderId = createdFolder?.data?.id;
-    }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      const existingFolder = folderRes?.data?.value?.find(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+        (item: any) => item?.name === folderName && item?.folder,
+      );
 
-    return folderId;
+      if (existingFolder) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        folderId = existingFolder?.id;
+      } else {
+        const createdFolder = (await this.continueMsGraphWithTokenRefresh(
+          userId,
+          get_CREATE_FOLDER_URL(),
+          'POST',
+          undefined,
+          {
+            name: folderName,
+            folder: {},
+            '@microsoft.graph.conflictBehavior': 'rename',
+          },
+        )) as AxiosResponse;
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        folderId = createdFolder?.data?.id;
+      }
+
+      return folderId;
+    } catch (error) {
+      console.error('Error creating folder in OneDrive:', error);
+      throw new Error('Failed to create or retrieve folder in OneDrive');
+    }
   }
 
   /**
@@ -460,11 +465,10 @@ export class MsGraphService {
       const uploadedUrls: string[] = [];
 
       for (const file of files) {
-        const uploadUrl = get_FILE_UPLOAD_URL(folderId, file.originalname);
-
+        console.log('file type: ', file.mimetype);
         const uploadRes = (await this.continueMsGraphWithTokenRefresh(
           userId,
-          uploadUrl,
+          get_FILE_UPLOAD_URL(folderId, file.originalname),
           'PUT',
           file.mimetype,
           file.buffer,
@@ -793,7 +797,7 @@ export class MsGraphService {
         emailContent,
       )) as AxiosResponse;
 
-      console.log('upload res: ', uploadRes);
+      // console.log('upload res: ', uploadRes);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
       return uploadRes?.data?.webUrl;
