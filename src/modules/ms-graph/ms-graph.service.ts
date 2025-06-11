@@ -27,6 +27,8 @@ import { EmailFromOutlookDto } from 'src/dto/request/ms-graph.request.dto';
 import { UsersService } from '../users/users.service';
 import { UserResponseDto } from 'src/dto/response/user.response.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { createOutlookEmailTemplate } from 'src/helpers/email-template.helper';
+import { normalizeDate } from 'src/helpers/shared.helper';
 
 @Injectable()
 export class MsGraphService {
@@ -626,7 +628,7 @@ export class MsGraphService {
       const ccRecipients: string[] = JSON.parse(
         email.ccRecipients || '[]',
       ) as string[];
-      const date = new Date(email.date).toISOString();
+      const date = normalizeDate(new Date(email.date));
       const bodyHtml = email.bodyHtml;
 
       // Get The User
@@ -640,23 +642,15 @@ export class MsGraphService {
         'Outlook_Plugin_Email_Attachments',
       );
 
-      const attachmentLinks = attachmentUrls.length
-        ? `<strong>Attachments:</strong><ul>${attachmentUrls
-            .map(
-              (url) => `<li><a href="${url}" target="_blank">${url}</a></li>`,
-            )
-            .join('')}</ul><br/>`
-        : '';
-
-      const emailContent = `
-        <strong>From:</strong> ${from}<br/>
-        <strong>To:</strong> ${toRecipients.join(', ')}<br/>
-        <strong>CC:</strong> ${ccRecipients.join(', ')}<br/>
-        <strong>Date:</strong> ${date}<br/>
-        <strong>Subject:</strong> ${subject}<br/><br/>
-        ${bodyHtml}<br/><br/>
-        ${attachmentLinks}
-      `;
+      const emailContent = createOutlookEmailTemplate(
+        subject,
+        from,
+        toRecipients,
+        ccRecipients,
+        date,
+        bodyHtml,
+        attachmentUrls,
+      );
 
       const folderId = await this.createFolderInOneDriveIfNotExists(
         user.id,
