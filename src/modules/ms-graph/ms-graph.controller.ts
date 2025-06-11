@@ -192,17 +192,20 @@ export class MsGraphController {
     }
   }
 
-  @Post('auth/check-authentication-status-outlook-plugin')
-  async checkAuthenticationStatusOutlookPlugin(
+  @Post('auth/check-authentication-status')
+  async checkAuthenticationStatus(
     @Body()
     data: {
-      email: string;
+      email?: string;
+      userId?: string;
     },
   ) {
     try {
-      const email = data.email;
       const serviceResponse =
-        await this.msGraphService.checkAuthenticationStatusOutlookPlugin(email);
+        await this.msGraphService.checkAuthenticationStatus(
+          data.email,
+          data.userId,
+        );
       return ApiResponse.success(
         null,
         'Authentication status checked successfully',

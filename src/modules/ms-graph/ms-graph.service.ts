@@ -6,7 +6,10 @@ import {
 import axios, { AxiosResponse } from 'axios';
 import {
   CUSTOM_MS_ERROR_CODES_FOR_PLUGIN,
-  GRAPH_BASE_URL,
+  get_CHECK_FOLDER_EXISTENCE_BY_NAME_URL,
+  get_CREATE_FOLDER_URL,
+  get_EMAIL_UPLOAD_URL,
+  get_FILE_UPLOAD_URL,
   MS_GRAPH_GET_ACCOUNT_DETAILS_URL,
   MS_GRAPH_LIST_ITEMS_IN_ONE_DRIVE_URL,
   MS_GRAPH_TOKEN_URL,
@@ -40,15 +43,17 @@ export class MsGraphService {
     private readonly usersService: UsersService,
   ) {}
 
-  private async getUserFromEmail(
-    email: string,
+  private async getUserFromEmailOrUserId(
+    email: string | null = null,
+    userId: string | null = null,
   ): Promise<UserResponseDto | null> {
     try {
-      const users: UserResponseDto[] = await this.usersService.findUsers(
-        undefined,
-        email,
-        undefined,
-      );
+      let users: UserResponseDto[] = [];
+      if (email) {
+        users = await this.usersService.findUsers(undefined, email, undefined);
+      } else if (userId) {
+        users = await this.usersService.findUsers(userId, undefined, undefined);
+      }
       if (!users || users.length == 0) {
         return null;
       }
@@ -164,6 +169,22 @@ export class MsGraphService {
     };
   }
 
+  /**
+   * Sends an HTTP request to the Microsoft Graph API using the provided access token.
+   *
+   * @param userId - The user ID associated with the request, or `null` if not applicable.
+   * @param url - The Microsoft Graph API endpoint URL.
+   * @param token - The OAuth 2.0 access token to authorize the request.
+   * @param contentType - The value for the `Content-Type` header. Defaults to `'application/json'`.
+   * @param method - The HTTP method to use for the request. Defaults to `'GET'`.
+   * @param data - The request payload for methods that support a body (e.g., `POST`, `PUT`, `PATCH`).
+   * @returns A promise that resolves with the Axios response object from the Microsoft Graph API.
+   * @throws {UnauthorizedException} If the request fails or the response is unauthorized.
+   *
+   * @remarks
+   * This method logs errors and throws a NestJS `UnauthorizedException` if the request fails.
+   * It supports `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` HTTP methods.
+   */
   private async tryMsGraphWithAccessToken(
     userId: string | null = null,
     url: string,
@@ -229,6 +250,18 @@ export class MsGraphService {
     }
   }
 
+  /**
+   * Attempts to perform a Microsoft Graph API request using the user's access token.
+   * If the access token is expired or invalid, it tries to refresh the token and retries the request.
+   *
+   * @param userId - The unique identifier of the user whose Microsoft credentials are used.
+   * @param url - The Microsoft Graph API endpoint to call.
+   * @param method - The HTTP method to use for the request (default is 'GET').
+   * @param contentType - Optional content type for the request (e.g., 'application/json').
+   * @param data - Optional data payload to send with the request (for POST, PUT, PATCH).
+   * @returns A promise that resolves with the Axios response from the Microsoft Graph API.
+   * @throws {UnauthorizedException} If unable to retrieve or refresh the access token, or if credentials are missing.
+   */
   private async continueMsGraphWithTokenRefresh(
     userId: string,
     url: string,
@@ -302,6 +335,18 @@ export class MsGraphService {
     }
   }
 
+  /**
+   * Exchanges an authorization code for Microsoft OAuth tokens.
+   *
+   * This method sends a POST request to the Microsoft Graph token endpoint with the provided
+   * authorization code and redirect URI, along with client credentials and requested scopes.
+   * It returns the token response containing access, refresh, and ID tokens.
+   *
+   * @param code - The authorization code received from Microsoft after user login.
+   * @param redirect - The redirect URI used in the OAuth flow.
+   * @returns A promise that resolves to a {@link MicrosoftJwtTokenResponse} containing the tokens.
+   * @throws Throws an error if the token exchange fails.
+   */
   private async getTokensFromMicrosoftForLogin(
     code: string,
     redirect: string,
@@ -331,6 +376,18 @@ export class MsGraphService {
     }
   }
 
+  /**
+   * Creates a folder in the user's OneDrive if it does not already exist, and returns the folder's ID.
+   *
+   * This method first checks if a folder with the specified name exists in the user's OneDrive.
+   * If the folder exists, its ID is returned. If not, a new folder is created with the given name,
+   * and the ID of the newly created folder is returned.
+   *
+   * @param userId - The unique identifier of the user whose OneDrive is being accessed.
+   * @param folderName - The name of the folder to check for or create.
+   * @returns A promise that resolves to the ID of the existing or newly created folder.
+   * @throws Will throw an error if the Microsoft Graph API requests fail.
+   */
   private async createFolderInOneDriveIfNotExists(
     userId: string,
     folderName: string,
@@ -339,7 +396,7 @@ export class MsGraphService {
 
     const folderRes = (await this.continueMsGraphWithTokenRefresh(
       userId,
-      `${GRAPH_BASE_URL}/me/drive/root/children?$filter=name eq '${folderName}'`,
+      get_CHECK_FOLDER_EXISTENCE_BY_NAME_URL(folderName),
       'GET',
       undefined,
       null,
@@ -357,7 +414,7 @@ export class MsGraphService {
     } else {
       const createdFolder = (await this.continueMsGraphWithTokenRefresh(
         userId,
-        `${GRAPH_BASE_URL}/me/drive/root/children`,
+        get_CREATE_FOLDER_URL(),
         'POST',
         undefined,
         {
@@ -374,6 +431,19 @@ export class MsGraphService {
     return folderId;
   }
 
+  /**
+   * Uploads multiple files to a specified folder in the user's OneDrive.
+   *
+   * - Checks if the target folder exists in OneDrive; creates it if it does not.
+   * - Uploads each file to the folder.
+   * - Returns an array of public-facing URLs for the uploaded files.
+   *
+   * @param userId - The unique identifier of the user whose OneDrive will be accessed.
+   * @param files - An array of files to upload, each conforming to the Express.Multer.File interface.
+   * @param folderName - The name of the folder in OneDrive where files will be uploaded.
+   * @returns A promise that resolves to an array of URLs for the uploaded files.
+   * @throws Throws an error if the upload process fails.
+   */
   private async uploadFilesToOneDrive(
     userId: string,
     files: Express.Multer.File[],
@@ -390,7 +460,7 @@ export class MsGraphService {
       const uploadedUrls: string[] = [];
 
       for (const file of files) {
-        const uploadUrl = `${GRAPH_BASE_URL}/me/drive/items/${folderId}:/${file.originalname}:/content`;
+        const uploadUrl = get_FILE_UPLOAD_URL(folderId, file.originalname);
 
         const uploadRes = (await this.continueMsGraphWithTokenRefresh(
           userId,
@@ -411,6 +481,13 @@ export class MsGraphService {
     }
   }
 
+  /**
+   * Saves Microsoft credentials in the database after encrypting sensitive tokens.
+   *
+   * @param data - An object containing the user's Microsoft credentials to be stored.
+   * @returns A promise that resolves when the credentials have been successfully saved.
+   * @throws Rethrows any error encountered during the encryption or storage process.
+   */
   private async saveMicrosoftCredentialsInDB(
     data: MicrosoftCredentialsStoreData,
   ): Promise<void> {
@@ -455,6 +532,14 @@ export class MsGraphService {
     return `${MicrosoftSettings.loginUrl}?${params.toString()}`;
   }
 
+  /**
+   * Exchanges an authorization code for Microsoft OAuth tokens and stores them in the database.
+   *
+   * @param code - The authorization code received from Microsoft OAuth flow.
+   * @param userId - The unique identifier of the user for whom the tokens are being obtained.
+   * @returns A promise that resolves when the tokens have been successfully stored.
+   * @throws {UnauthorizedException} If the token exchange or storage process fails.
+   */
   async getMicrosoftTokens(code: string, userId: string): Promise<void> {
     try {
       const data: MicrosoftJwtTokenResponse =
@@ -488,6 +573,16 @@ export class MsGraphService {
     }
   }
 
+  /**
+   * Retrieves Microsoft OAuth tokens using an authorization code and saves the credentials for the user.
+   * This method is intended for use with the Outlook plugin authentication flow.
+   *
+   * @param code - The authorization code received from Microsoft after user login.
+   * @param redirect - The redirect URI used in the OAuth flow.
+   * @returns An object containing the authenticated user's email address.
+   * @throws {UnauthorizedException} If the user's email is not permitted or not found in the system.
+   * @throws {Error} If any error occurs during the token exchange or user retrieval process.
+   */
   async getMicrosoftTokensForOutlookPlugin(
     code: string,
     redirect: string,
@@ -511,7 +606,10 @@ export class MsGraphService {
       )) as AxiosResponse;
       const account_data = response_account.data as MicrosoftAccountResponseDto;
 
-      const user = await this.getUserFromEmail(account_data.userPrincipalName);
+      const user = await this.getUserFromEmailOrUserId(
+        account_data.userPrincipalName,
+        null,
+      );
 
       if (!user) {
         throw new UnauthorizedException(
@@ -623,6 +721,22 @@ export class MsGraphService {
     }
   }
 
+  /**
+   * Saves an email as an HTML file to the user's OneDrive, including any attachments.
+   *
+   * This method performs the following steps:
+   * 1. Retrieves the user based on the provided email or user principal.
+   * 2. Uploads any provided attachments to a designated OneDrive folder.
+   * 3. Generates an HTML representation of the email, including metadata and attachment links.
+   * 4. Ensures the target folder for emails exists in OneDrive, creating it if necessary.
+   * 5. Uploads the HTML file to OneDrive and returns the web URL of the uploaded file.
+   *
+   * @param email - The email data transfer object containing email metadata and content.
+   * @param attachments - An array of files representing the email's attachments.
+   * @returns A promise that resolves to the web URL of the uploaded email file in OneDrive.
+   * @throws {BadRequestException} If the user cannot be found for the provided email address.
+   * @throws {any} If any other error occurs during the process.
+   */
   async saveEmailAsFileToOneDrive(
     email: EmailFromOutlookDto,
     attachments: Express.Multer.File[],
@@ -639,7 +753,7 @@ export class MsGraphService {
       const bodyHtml = email.bodyHtml;
 
       // Get The User
-      const user = await this.getUserFromEmail(userPrincipal);
+      const user = await this.getUserFromEmailOrUserId(userPrincipal, null);
       if (!user) {
         throw new BadRequestException(
           'Unable to find the user for the provided email address',
@@ -669,7 +783,7 @@ export class MsGraphService {
         'Outlook_Plugin_Emails',
       );
 
-      const uploadUrl = `${GRAPH_BASE_URL}/me/drive/items/${folderId}:/${fileName}:/content`;
+      const uploadUrl = get_EMAIL_UPLOAD_URL(folderId, fileName);
 
       const uploadRes = (await this.continueMsGraphWithTokenRefresh(
         user.id,
@@ -698,11 +812,17 @@ export class MsGraphService {
    * @param email - The email address of the user to check authentication for.
    * @returns A promise that resolves to `true` if the user is authenticated, or `false` otherwise.
    */
-  async checkAuthenticationStatusOutlookPlugin(
-    email: string,
+  async checkAuthenticationStatus(
+    email?: string,
+    userId?: string,
   ): Promise<boolean> {
     try {
-      const user = await this.getUserFromEmail(email);
+      let user: UserResponseDto | null = null;
+      if (email) {
+        user = await this.getUserFromEmailOrUserId(email, null);
+      } else if (userId) {
+        user = await this.getUserFromEmailOrUserId(null, userId);
+      }
       if (!user) {
         return false; // User not found, not authenticated
       }
