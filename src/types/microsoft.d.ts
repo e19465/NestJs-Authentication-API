@@ -8,12 +8,9 @@ export type MicrosoftJwtTokenResponse = {
   id_token: string;
 };
 
-export type EmailFromOutlookDto = {
-  subject: string;
-  from: string;
-  toRecipients: string;
-  ccRecipients?: string;
-  date: string;
-  bodyHtml: string;
-  userPrincipal?: string;
+export type MicrosoftCredentialsStoreData = {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  idToken: string;
 };

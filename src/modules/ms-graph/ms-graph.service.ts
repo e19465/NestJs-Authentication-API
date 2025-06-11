@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
 import {
+  GRAPH_BASE_URL,
   MS_GRAPH_GET_ACCOUNT_DETAILS_URL,
   MS_GRAPH_LIST_ITEMS_IN_ONE_DRIVE_URL,
   MS_GRAPH_TOKEN_URL,
@@ -17,14 +18,15 @@ import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repository';
 import { CustomLoggerService } from 'src/custom-logger/custom-logger.service';
 import { MicrosoftSettings } from 'src/settings';
+import { StoreMicrosoftCredentialsRepositoryModel } from 'src/repository/models/microsoft.models';
 import {
-  StoreMicrosoftCredentialsOutlookRepositoryModel,
-  StoreMicrosoftCredentialsRepositoryModel,
-} from 'src/repository/models/microsoft.models';
-import {
-  EmailFromOutlookDto,
+  MicrosoftCredentialsStoreData,
   MicrosoftJwtTokenResponse,
 } from 'src/types/microsoft';
+import { EmailFromOutlookDto } from 'src/dto/request/ms-graph.request.dto';
+import { UsersService } from '../users/users.service';
+import { UserResponseDto } from 'src/dto/response/user.response.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MsGraphService {
@@ -32,7 +34,24 @@ export class MsGraphService {
   constructor(
     private readonly microsoftRepository: UserMicrosoftCredentialRepository,
     private readonly tokenCryptoHelper: TokenCryptoHelper,
+    private readonly usersService: UsersService,
   ) {}
+
+  private async getUserFromEmail(email: string): Promise<UserResponseDto> {
+    try {
+      const users: UserResponseDto[] = await this.usersService.findUsers(
+        undefined,
+        email,
+        undefined,
+      );
+      if (!users || users.length == 0) {
+        throw new UnauthorizedException('Invalid Email');
+      }
+      return users[0];
+    } catch (error) {
+      throw error;
+    }
+  }
 
   /**
    * Refreshes the Microsoft OAuth tokens for a given user.
@@ -140,27 +159,58 @@ export class MsGraphService {
     };
   }
 
-  /**
-   * Attempts to fetch data from the Microsoft Graph API using the provided access token.
-   *
-   * @param userId - The unique identifier of the user making the request.
-   * @param url - The Microsoft Graph API endpoint URL to fetch data from.
-   * @param token - The OAuth2 access token used for authentication with Microsoft Graph.
-   * @returns A promise that resolves with the Axios response from the Microsoft Graph API.
-   * @throws {UnauthorizedException} If the request to Microsoft Graph fails or the token is invalid.
-   */
   private async tryMsGraphWithAccessToken(
     userId: string | null = null,
     url: string,
     token: string,
+    contentType: string | null = 'application/json',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET',
+    data?: any,
   ): Promise<any> {
     try {
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      let response;
+      if (method == 'GET') {
+        response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': contentType,
+          },
+        });
+      } else if (method == 'POST') {
+        if (data) {
+          response = await axios.post(url, data, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': contentType,
+            },
+          });
+        }
+      } else if (method == 'PUT') {
+        if (data) {
+          response = await axios.put(url, data, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': contentType,
+            },
+          });
+        }
+      } else if (method == 'PATCH') {
+        if (data) {
+          response = await axios.patch(url, data, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': contentType,
+            },
+          });
+        }
+      } else {
+        response = await axios.delete(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': contentType,
+          },
+        });
+      }
       return response;
     } catch (err) {
       this.logger.error(
@@ -174,18 +224,12 @@ export class MsGraphService {
     }
   }
 
-  /**
-   * Attempts to access the Microsoft Graph API using the stored access token for the specified user.
-   * If the access token is invalid or expired, it tries to refresh the token and retries the request.
-   *
-   * @param userId - The unique identifier of the user whose Microsoft credentials are being used.
-   * @param url - The Microsoft Graph API endpoint to be accessed.
-   * @returns A promise that resolves with the response from the Microsoft Graph API.
-   * @throws {UnauthorizedException} If unable to retrieve or refresh the Microsoft access token.
-   */
   private async continueMsGraphWithTokenRefresh(
     userId: string,
     url: string,
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET',
+    contentType?: string,
+    data?: any,
   ): Promise<any> {
     let accessToken: string | null = null;
 
@@ -212,6 +256,9 @@ export class MsGraphService {
         userId,
         url,
         accessToken,
+        contentType,
+        method,
+        data,
       )) as AxiosResponse;
 
       return response;
@@ -229,6 +276,9 @@ export class MsGraphService {
           userId,
           url,
           newAccessToken,
+          contentType,
+          method,
+          data,
         )) as AxiosResponse;
 
         return newResponse;
@@ -276,6 +326,102 @@ export class MsGraphService {
     }
   }
 
+  private async createFolderInOneDriveIfNotExists(
+    userId: string,
+    folderName: string,
+  ): Promise<string> {
+    let folderId: string;
+
+    const folderRes = (await this.continueMsGraphWithTokenRefresh(
+      userId,
+      `${GRAPH_BASE_URL}/me/drive/root/children?$filter=name eq '${folderName}'`,
+      'GET',
+      undefined,
+      null,
+    )) as AxiosResponse;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+    const existingFolder = folderRes?.data?.value?.find(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+      (item: any) => item?.name === folderName && item?.folder,
+    );
+
+    if (existingFolder) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      folderId = existingFolder?.id;
+    } else {
+      const createdFolder = (await this.continueMsGraphWithTokenRefresh(
+        userId,
+        `${GRAPH_BASE_URL}/me/drive/root/children`,
+        'POST',
+        undefined,
+        {
+          name: folderName,
+          folder: {},
+          '@microsoft.graph.conflictBehavior': 'rename',
+        },
+      )) as AxiosResponse;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      folderId = createdFolder?.data?.id;
+    }
+
+    return folderId;
+  }
+
+  private async uploadFilesToOneDrive(
+    userId: string,
+    files: Express.Multer.File[],
+    folderName: string,
+  ): Promise<string[]> {
+    try {
+      // 1. Check if folder exists
+      const folderId = await this.createFolderInOneDriveIfNotExists(
+        userId,
+        folderName,
+      );
+
+      // 3. Upload each file to the folder
+      const uploadedUrls: string[] = [];
+
+      for (const file of files) {
+        const uploadUrl = `${GRAPH_BASE_URL}/me/drive/items/${folderId}:/${file.originalname}:/content`;
+
+        const uploadRes = (await this.continueMsGraphWithTokenRefresh(
+          userId,
+          uploadUrl,
+          'PUT',
+          file.mimetype,
+          file.buffer,
+        )) as AxiosResponse;
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        uploadedUrls.push(uploadRes?.data?.webUrl); // Return public-facing URLs
+      }
+
+      return uploadedUrls;
+    } catch (error) {
+      console.error('Upload failed:', error);
+      throw error;
+    }
+  }
+
+  private async saveMicrosoftCredentialsInDB(
+    data: MicrosoftCredentialsStoreData,
+  ): Promise<void> {
+    try {
+      const credentials: StoreMicrosoftCredentialsRepositoryModel = {
+        userId: data.userId,
+        accessToken: this.tokenCryptoHelper.encrypt(data.accessToken),
+        refreshToken: this.tokenCryptoHelper.encrypt(data.refreshToken),
+        idToken: this.tokenCryptoHelper.encrypt(data.idToken),
+      };
+      await this.microsoftRepository.storeMicrosoftCredentials(credentials);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   /**
    * Constructs and returns the Microsoft OAuth2 authorization redirect URI.
    *
@@ -314,14 +460,14 @@ export class MsGraphService {
       const refreshToken = data.refresh_token;
       const idToken = data.id_token;
 
-      const credentials: StoreMicrosoftCredentialsRepositoryModel = {
-        userId: userId,
-        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
-        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
-        idToken: this.tokenCryptoHelper.encrypt(idToken),
+      const credentials: MicrosoftCredentialsStoreData = {
+        userId,
+        accessToken,
+        refreshToken,
+        idToken,
       };
 
-      await this.microsoftRepository.storeMicrosoftCredentials(credentials);
+      await this.saveMicrosoftCredentialsInDB(credentials);
       return;
     } catch (error: any) {
       this.logger.error(
@@ -358,16 +504,19 @@ export class MsGraphService {
       )) as AxiosResponse;
       const account_data = response_account.data as MicrosoftAccountResponseDto;
 
-      const credentials: StoreMicrosoftCredentialsOutlookRepositoryModel = {
-        email: account_data.userPrincipalName,
-        accessToken: this.tokenCryptoHelper.encrypt(accessToken),
-        refreshToken: this.tokenCryptoHelper.encrypt(refreshToken),
-        idToken: this.tokenCryptoHelper.encrypt(idToken),
+      const user: UserResponseDto = await this.getUserFromEmail(
+        account_data.userPrincipalName,
+      );
+
+      const credentials: MicrosoftCredentialsStoreData = {
+        userId: user.id,
+        accessToken,
+        refreshToken,
+        idToken,
       };
 
-      await this.microsoftRepository.storeMicrosoftCredentialsOutlook(
-        credentials,
-      );
+      await this.saveMicrosoftCredentialsInDB(credentials);
+
       return {
         email: account_data.userPrincipalName,
       };
@@ -465,30 +614,69 @@ export class MsGraphService {
     }
   }
 
-  handleIncomingEmail(
+  async saveEmailAsFileToOneDrive(
     email: EmailFromOutlookDto,
     attachments: Express.Multer.File[],
-  ): void {
+  ): Promise<string> {
     try {
-      const userPrincipal = email.userPrincipal;
+      const userPrincipal = email.userPrincipal || '';
       const subject = email.subject;
       const from = email.from;
       const toRecipients: string[] = JSON.parse(email.toRecipients) as string[];
       const ccRecipients: string[] = JSON.parse(
         email.ccRecipients || '[]',
       ) as string[];
-      const date = new Date(email.date);
+      const date = new Date(email.date).toISOString();
       const bodyHtml = email.bodyHtml;
-      const attachmentsLength = attachments ? attachments.length : 0;
 
-      console.log('userPrincipal:', userPrincipal);
-      console.log('subject:', subject);
-      console.log('from:', from);
-      console.log('toRecipients:', toRecipients);
-      console.log('ccRecipients:', ccRecipients);
-      console.log('date:', date);
-      console.log('bodyHtml length:', bodyHtml.length);
-      console.log('attachments length:', attachmentsLength);
+      // Get The User
+      const user: UserResponseDto = await this.getUserFromEmail(userPrincipal);
+
+      const fileName = `${subject || 'email'}-${uuidv4()}.html`;
+
+      const attachmentUrls: string[] = await this.uploadFilesToOneDrive(
+        user.id,
+        attachments,
+        'Outlook_Plugin_Email_Attachments',
+      );
+
+      const attachmentLinks = attachmentUrls.length
+        ? `<strong>Attachments:</strong><ul>${attachmentUrls
+            .map(
+              (url) => `<li><a href="${url}" target="_blank">${url}</a></li>`,
+            )
+            .join('')}</ul><br/>`
+        : '';
+
+      const emailContent = `
+        <strong>From:</strong> ${from}<br/>
+        <strong>To:</strong> ${toRecipients.join(', ')}<br/>
+        <strong>CC:</strong> ${ccRecipients.join(', ')}<br/>
+        <strong>Date:</strong> ${date}<br/>
+        <strong>Subject:</strong> ${subject}<br/><br/>
+        ${bodyHtml}<br/><br/>
+        ${attachmentLinks}
+      `;
+
+      const folderId = await this.createFolderInOneDriveIfNotExists(
+        user.id,
+        'Outlook_Plugin_Emails',
+      );
+
+      const uploadUrl = `${GRAPH_BASE_URL}/me/drive/items/${folderId}:/${fileName}:/content`;
+
+      const uploadRes = (await this.continueMsGraphWithTokenRefresh(
+        user.id,
+        uploadUrl,
+        'PUT',
+        'text/html',
+        emailContent,
+      )) as AxiosResponse;
+
+      console.log('upload res: ', uploadRes);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+      return uploadRes?.data?.webUrl;
     } catch (error) {
       throw error;
     }

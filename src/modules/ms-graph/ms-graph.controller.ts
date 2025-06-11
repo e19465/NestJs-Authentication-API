@@ -17,7 +17,7 @@ import { ApiResponse } from 'src/helpers/api-response.helper';
 import { Request } from 'express';
 import { DecodedJwtAccessToken } from 'src/dto/response/auth.response.dto';
 import { AuthMicrosoftGuard } from 'src/guards/auth.microsoft.guard';
-import { EmailFromOutlookDto } from 'src/types/microsoft';
+import { EmailFromOutlookDto } from 'src/dto/request/ms-graph.request.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('ms-graph')
@@ -172,13 +172,21 @@ export class MsGraphController {
 
   @Post('upload-email-to-cloud')
   @UseInterceptors(FilesInterceptor('attachments'))
-  receiveEmail(
+  async receiveEmail(
     @Body() bodyDate: EmailFromOutlookDto,
     @UploadedFiles() attachments: Express.Multer.File[],
   ) {
     try {
-      this.msGraphService.handleIncomingEmail(bodyDate, attachments);
-      return ApiResponse.success(null, 'Email received', null, HttpStatus.OK);
+      await this.msGraphService.saveEmailAsFileToOneDrive(
+        bodyDate,
+        attachments,
+      );
+      return ApiResponse.success(
+        null,
+        'Email saved in OneDrive',
+        null,
+        HttpStatus.OK,
+      );
     } catch (error) {
       throw error;
     }

@@ -15,3 +15,5 @@ export const MS_GRAPH_SEARCH_IN_ONE_DRIVE_URL =
 
 export const MS_GRAPH_TOKEN_URL =
   'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+
+export const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
