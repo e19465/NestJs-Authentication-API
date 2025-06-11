@@ -39,7 +39,9 @@ export class MsGraphService {
     private readonly usersService: UsersService,
   ) {}
 
-  private async getUserFromEmail(email: string): Promise<UserResponseDto> {
+  private async getUserFromEmail(
+    email: string,
+  ): Promise<UserResponseDto | null> {
     try {
       const users: UserResponseDto[] = await this.usersService.findUsers(
         undefined,
@@ -47,7 +49,7 @@ export class MsGraphService {
         undefined,
       );
       if (!users || users.length == 0) {
-        throw new UnauthorizedException('Invalid Email');
+        return null;
       }
       return users[0];
     } catch (error) {
@@ -424,6 +426,8 @@ export class MsGraphService {
     }
   }
 
+  //! ------------ END OF PRIVATE METHODS, BEGIN PUBLIC METHODS ------------ !//
+
   /**
    * Constructs and returns the Microsoft OAuth2 authorization redirect URI.
    *
@@ -506,9 +510,11 @@ export class MsGraphService {
       )) as AxiosResponse;
       const account_data = response_account.data as MicrosoftAccountResponseDto;
 
-      const user: UserResponseDto = await this.getUserFromEmail(
-        account_data.userPrincipalName,
-      );
+      const user = await this.getUserFromEmail(account_data.userPrincipalName);
+
+      if (!user) {
+        throw new UnauthorizedException('Email not permitted');
+      }
 
       const credentials: MicrosoftCredentialsStoreData = {
         userId: user.id,
@@ -632,7 +638,12 @@ export class MsGraphService {
       const bodyHtml = email.bodyHtml;
 
       // Get The User
-      const user: UserResponseDto = await this.getUserFromEmail(userPrincipal);
+      const user = await this.getUserFromEmail(userPrincipal);
+      if (!user) {
+        throw new BadRequestException(
+          'Unable to find the user for the provided email address',
+        );
+      }
 
       const fileName = `${subject || 'email'}-${uuidv4()}.html`;
 
@@ -690,7 +701,10 @@ export class MsGraphService {
     email: string,
   ): Promise<boolean> {
     try {
-      const user: UserResponseDto = await this.getUserFromEmail(email);
+      const user = await this.getUserFromEmail(email);
+      if (!user) {
+        return false; // User not found, not authenticated
+      }
       await this.refreshMsTokens(user.id);
       return true; // If we reach here, the user is authenticated
     } catch (error) {
