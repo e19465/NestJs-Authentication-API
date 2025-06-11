@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
 import {
+  CUSTOM_MS_ERROR_CODES_FOR_PLUGIN,
   GRAPH_BASE_URL,
   MS_GRAPH_GET_ACCOUNT_DETAILS_URL,
   MS_GRAPH_LIST_ITEMS_IN_ONE_DRIVE_URL,
@@ -513,7 +514,9 @@ export class MsGraphService {
       const user = await this.getUserFromEmail(account_data.userPrincipalName);
 
       if (!user) {
-        throw new UnauthorizedException('Email not permitted');
+        throw new UnauthorizedException(
+          CUSTOM_MS_ERROR_CODES_FOR_PLUGIN.EmailNotPermitted,
+        );
       }
 
       const credentials: MicrosoftCredentialsStoreData = {
@@ -534,9 +537,7 @@ export class MsGraphService {
         MsGraphService.name,
         (error as Error).stack || error,
       );
-      throw new UnauthorizedException(
-        'Failed to obtain tokens from Microsoft: ' + error,
-      );
+      throw error;
     }
   }
 

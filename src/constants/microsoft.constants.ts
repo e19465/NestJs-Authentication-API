@@ -17,3 +17,7 @@ export const MS_GRAPH_TOKEN_URL =
   'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 
 export const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
+
+export const CUSTOM_MS_ERROR_CODES_FOR_PLUGIN = {
+  EmailNotPermitted: 'EmailNotPermitted',
+};
