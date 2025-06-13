@@ -9,166 +9,172 @@ export const createOutlookEmailTemplate = (
 ) => {
   return `
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="en" dir="ltr">
     <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Email View</title>
     <style>
         body {
-        width: 100%;
-        min-height: 100vh;
-        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        background-color: #f5f7fa;
-        margin: 0;
-        padding: 0;
-        color: #1a1a1a;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        line-height: 1.5;
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.5;
         }
         
         .container-wrapper {
-        width: 100%;
-        padding: 40px 20px;
-        display: flex;
-        justify-content: center;
+            width: 100%;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
         }
         
         .container {
-        min-width: 680px;
-        max-width: 800px;
-        width: 100%;
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-        padding: 40px;
-        box-sizing: border-box;
-        border: 1px solid #e1e5eb;
+            min-width: 680px;
+            max-width: 800px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            box-sizing: border-box;
+            border: 1px solid #e1e5eb;
         }
         
         .header {
-        padding-bottom: 16px;
-        margin-bottom: 24px;
-        border-bottom: 1px solid #eaeff5;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #eaeff5;
         }
         
         .header h2 {
-        font-size: 28px;
-        font-weight: 600;
-        margin: 0 0 8px 0;
-        color: #1d1d1f;
-        line-height: 1.3;
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: #1d1d1f;
+            line-height: 1.3;
         }
         
         .meta {
-        font-size: 14px;
-        color: #5a5a5a;
+            font-size: 14px;
+            color: #5a5a5a;
         }
         
         .meta-row {
-        display: flex;
-        margin-bottom: 8px;
-        flex-wrap: wrap;
+            display: flex;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
         }
         
         .meta-label {
-        font-weight: 500;
-        width: 80px;
-        color: #3a3a3a;
-        flex-shrink: 0;
+            font-weight: 500;
+            width: 80px;
+            color: #3a3a3a;
+            flex-shrink: 0;
         }
         
         .meta-value {
-        flex: 1;
-        min-width: 0;
-        word-break: break-word;
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
         }
         
         .body-content {
-        margin: 32px 0;
-        line-height: 1.6;
-        color: #2d2d2d;
+            margin: 32px 0;
+            line-height: 1.6;
+            color: #2d2d2d;
         }
         
         .body-content p {
-        margin: 0 0 16px 0;
+            margin: 0 0 16px 0;
         }
         
         .body-content p:last-child {
-        margin-bottom: 0;
+            margin-bottom: 0;
         }
         
         .attachments {
-        margin-top: 40px;
-        padding-top: 24px;
-        border-top: 1px solid #eaeff5;
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #eaeff5;
         }
         
         .attachments-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 16px;
-        color: #3a3a3a;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #3a3a3a;
         }
         
         .attachment-list {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
         }
         
         .attachment-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border: 1px solid #e1e8f0;
-        border-radius: 8px;
-        transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border: 1px solid #e1e8f0;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
         
         .attachment-item:hover {
-        background: #f0f5ff;
-        border-color: #d0ddf0;
-        transform: translateY(-1px);
+            background: #f0f5ff;
+            border-color: #d0ddf0;
+            transform: translateY(-1px);
         }
         
         .attachment-icon {
-        width: 20px;
-        height: 20px;
-        margin-right: 12px;
-        flex-shrink: 0;
-        color: #4a6cf7;
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            color: #4a6cf7;
         }
         
         .attachment-link {
-        color: #4a6cf7;
-        text-decoration: none;
-        font-weight: 500;
-        word-break: break-all;
-        transition: color 0.2s;
+            color: #4a6cf7;
+            text-decoration: none;
+            font-weight: 500;
+            word-break: break-all;
+            transition: color 0.2s;
         }
         
         .attachment-link:hover {
-        color: #3a5ce4;
-        text-decoration: underline;
+            color: #3a5ce4;
+            text-decoration: underline;
         }
         
         @media (max-width: 768px) {
-        .container {
-            min-width: auto;
-            width: 100%;
-            padding: 24px;
-            border-radius: 0;
-        }
-        
-        .meta-label {
-            width: 100%;
-            margin-bottom: 4px;
-        }
+            .container {
+                min-width: auto;
+                width: 100%;
+                padding: 24px;
+                border-radius: 0;
+            }
+            
+            .meta-row {
+                flex-direction: column;
+                margin-bottom: 16px;
+            }
+
+            .meta-value {
+                width: 100%;
+            }
         }
     </style>
     </head>
