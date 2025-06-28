@@ -121,3 +121,37 @@ export const normalizeRole = (role: string): Role | null => {
         null
     : null;
 };
+
+/**
+ * Normalizes a given Date object into a formatted string.
+ *
+ * The returned string is in the format: `YYYY-MM-DD at HH.MM AM/PM`.
+ * - `YYYY` is the 4-digit year.
+ * - `MM` is the 2-digit month.
+ * - `DD` is the 2-digit day.
+ * - `HH` is the 2-digit hour in 12-hour format.
+ * - `MM` is the 2-digit minute.
+ * - `AM/PM` denotes the period of the day.
+ *
+ * @param date - The Date object to normalize.
+ * @returns The formatted date string.
+ *
+ * @example
+ * normalizeDate(new Date('2023-10-01T14:30:00Z')) // returns '2023-10-01 : 02.30 PM'
+ */
+export const normalizeDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+
+  const paddedHours = hours.toString().padStart(2, '0');
+  const paddedMinutes = minutes.toString().padStart(2, '0');
+
+  return `${year}-${month}-${day} : ${paddedHours}.${paddedMinutes} ${ampm}`;
+};

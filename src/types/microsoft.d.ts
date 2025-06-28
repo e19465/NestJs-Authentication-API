@@ -7,3 +7,10 @@ export type MicrosoftJwtTokenResponse = {
   refresh_token: string;
   id_token: string;
 };
+
+export type MicrosoftCredentialsStoreData = {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  idToken: string;
+};

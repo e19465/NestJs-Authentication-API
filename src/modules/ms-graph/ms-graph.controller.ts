@@ -7,7 +7,9 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/guards/auth.jwt.guard';
 import { MsGraphService } from './ms-graph.service';
@@ -15,6 +17,8 @@ import { ApiResponse } from 'src/helpers/api-response.helper';
 import { Request } from 'express';
 import { DecodedJwtAccessToken } from 'src/dto/response/auth.response.dto';
 import { AuthMicrosoftGuard } from 'src/guards/auth.microsoft.guard';
+import { EmailFromOutlookDto } from 'src/dto/request/ms-graph.request.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('ms-graph')
 export class MsGraphController {
@@ -49,19 +53,43 @@ export class MsGraphController {
     @Body()
     data: {
       code: string;
-      redirect?: string;
     },
   ) {
     try {
       const requestUser = request.user as DecodedJwtAccessToken;
       const userId = requestUser.id;
       const code = data.code;
-      const redirect = data.redirect;
       const serviceResponse = await this.msGraphService.getMicrosoftTokens(
         code,
         userId,
-        redirect,
       );
+      return ApiResponse.success(
+        null,
+        'Microsoft tokens obtained successfully',
+        serviceResponse,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('auth/obtain-tokens-outlook-plugin')
+  async getMicrosoftTokensForOutlook(
+    @Body()
+    data: {
+      code: string;
+      redirect: string;
+    },
+  ) {
+    try {
+      const code = data.code;
+      const redirect = data.redirect;
+      const serviceResponse =
+        await this.msGraphService.getMicrosoftTokensForOutlookPlugin(
+          code,
+          redirect,
+        );
       return ApiResponse.success(
         null,
         'Microsoft tokens obtained successfully',
@@ -135,6 +163,53 @@ export class MsGraphController {
         null,
         'Microsoft account disconnected successfully',
         null,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('upload-email-to-cloud')
+  @UseInterceptors(FilesInterceptor('attachments'))
+  async receiveEmail(
+    @Body() bodyDate: EmailFromOutlookDto,
+    @UploadedFiles() attachments: Express.Multer.File[],
+  ) {
+    try {
+      await this.msGraphService.saveEmailAsFileToOneDrive(
+        bodyDate,
+        attachments,
+      );
+      return ApiResponse.success(
+        null,
+        'Email saved in OneDrive',
+        null,
+        HttpStatus.OK,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('auth/check-authentication-status')
+  async checkAuthenticationStatus(
+    @Body()
+    data: {
+      email?: string;
+      userId?: string;
+    },
+  ) {
+    try {
+      const serviceResponse =
+        await this.msGraphService.checkAuthenticationStatus(
+          data.email,
+          data.userId,
+        );
+      return ApiResponse.success(
+        null,
+        'Authentication status checked successfully',
+        serviceResponse,
         HttpStatus.OK,
       );
     } catch (error) {

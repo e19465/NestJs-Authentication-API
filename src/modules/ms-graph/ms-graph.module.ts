@@ -6,9 +6,10 @@ import { UserMicrosoftCredentialRepository } from 'src/repository/microsoft.repo
 import { TokenCryptoHelper } from 'src/helpers/token-crypto.helper';
 import { AuthModule } from '../auth/auth.module';
 import { AuthMicrosoftStrategy } from 'src/stratergies/auth.microsoft.strategy';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [DatabaseModule, AuthModule, UsersModule],
   controllers: [MsGraphController],
   providers: [
     MsGraphService,
